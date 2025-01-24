@@ -11,7 +11,7 @@ graph TB
     subgraph tailscale[Self-hosted Infrastructure]
         subgraph caspar[caspar - Hardened Gentoo - 16GB/1TB]
             subgraph security[Security]
-                zitadel[Zitadel OIDC/OAuth2]
+                zitadel[Zitadel]
                 mcaptcha[mCaptcha]
                 dnscrypt-proxy[DNSCrypt-Proxy]
             end
@@ -26,9 +26,9 @@ graph TB
             end
         end
         subgraph balthasar[balthasar - Ubuntu - 32GB/1TB]
+            minio[MinIO]
             subgraph social[Social]
                 misskey[Misskey v13]
-                minio[MinIO]
                 deeplx[DeepLX]
                 neoquesdon[Neo-Quesdon]
             end
@@ -59,11 +59,12 @@ graph TB
             end
         end
         %% Dependencies
-        zitadel -.-> balthasar
+        zitadel --> outline
         nsm -.-> monitoring
         nsm2 -.-> monitoring
         monitoring --> social & matrix & apps & games
         social --> minio
+        outline --> minio
         matrix --> jitsi
         %% Note
         note["Shared: Tailscale mesh, Node Exporter + cAdvisor"]
