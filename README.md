@@ -19,6 +19,7 @@ graph TB
                 grafana[Grafana]
                 prometheus[Prometheus + Alertmanager]
                 uptime[Uptime Kuma]
+                homarr[homarr]
             end
             subgraph CTF[CTF]
                 ctfd[CTFd]
