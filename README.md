@@ -27,14 +27,14 @@ subgraph tailscale[Self-hosted Infrastructure]
             browser-vm[VM]
         end
         subgraph social_caspar[Social]
-            nayamisskey[Nayamisskey]
+            nayamisskey[Misskey N/A]
         end
     end
 
     subgraph balthasar[balthasar - Ubuntu - 32GB/1TB]
         minio[MinIO]
         subgraph social[Social]
-            yamisskey[Yamisskey]
+            yamisskey[Misskey]
             deeplx[DeepLX]
             neoquesdon[Neo-Quesdon]
         end
