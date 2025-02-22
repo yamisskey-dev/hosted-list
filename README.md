@@ -63,7 +63,6 @@ subgraph tailscale[Self-hosted Infrastructure]
             algo[Algo VPN]
             warp[Cloudflare WARP⁺]
             xray[Xray-core]
-            squid[Squid Proxy]
         end
 
         subgraph melchior[melchior - Debian - 16GB/1TB]
