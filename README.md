@@ -59,7 +59,7 @@ subgraph tailscale[Self-hosted Infrastructure]
         direction TB
         subgraph linode["linode Arch Linux Nanode 1GB"]
             direction TB
-            warp[WARP]
+            warp[Cloudflare WARP]
             xray[Xray-core]
             squid[Squid Proxy]
         end
