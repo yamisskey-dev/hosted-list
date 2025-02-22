@@ -51,6 +51,7 @@ subgraph tailscale[Self-hosted Infrastructure]
         end
         subgraph games[Games]
             minecraft[Minecraft Java]
+            impostor[Impostor]
             playig[playit.gg]
         end
     end
@@ -59,7 +60,6 @@ subgraph tailscale[Self-hosted Infrastructure]
         direction TB
         subgraph linode["linode Arch Linux Nanode 1GB"]
             direction TB
-            impostor[Impostor]
             algo[Algo VPN]
             warp[Cloudflare WARP⁺]
             xray[Xray-core]
