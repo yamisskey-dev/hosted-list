@@ -70,7 +70,7 @@ subgraph tailscale[Self-hosted Infrastructure]
         
         subgraph raspi[raspi - RPi OS - 8GB/2TB]
             subgraph storage[Storage & Backup]
-                reserve[Future Expansion / Backup]
+                borgbackup[Borg]
             end
         end
     end
