@@ -56,14 +56,9 @@ subgraph tailscale[Self-hosted Infrastructure]
     
     subgraph network_layer[Network Layer]
         subgraph linode["linode - Arch Linux - 1GB RAM"]
-            subgraph privacy_vpn[Privacy VPN]
                 algo[Algo VPN]
                 xray[Xray-core]
-            end
-            subgraph dual_mode["Dual Mode (Selective Routing)"]
-                warp_toggle[WARP Toggle]
                 impostor[Impostor]
-            end
         end
         
         subgraph melchior[melchior - Debian - 16GB/1TB]
