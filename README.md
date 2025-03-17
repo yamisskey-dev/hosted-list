@@ -50,16 +50,20 @@ subgraph tailscale[Self-hosted Infrastructure]
         end
         subgraph games[Games]
             minecraft[Minecraft Java]
-            impostor[Impostor]
             playig[playit.gg]
         end
     end
     
     subgraph network_layer[Network Layer]
         subgraph linode["linode - Arch Linux - 1GB RAM"]
-            algo[Algo VPN]
-            warp[Cloudflare WARP⁺]
-            xray[Xray-core]
+            subgraph privacy_vpn[Privacy VPN]
+                algo[Algo VPN]
+                xray[Xray-core]
+            end
+            subgraph dual_mode["Dual Mode (Selective Routing)"]
+                warp_toggle[WARP Toggle]
+                impostor[Impostor]
+            end
         end
         
         subgraph melchior[melchior - Debian - 16GB/1TB]
@@ -69,29 +73,28 @@ subgraph tailscale[Self-hosted Infrastructure]
         end
         
         subgraph raspi[raspi - RPi OS - 8GB/2TB]
-            subgraph storage[Storage & Backup]
-                borgbackup[Borg]
+            subgraph backup[Backup & Storage]
+                borgbackup[Borg Backup Server]
             end
         end
     end
-
 %% Dependencies
 zitadel --> outline
 nsm -.-> monitoring
-storage -.-> minio
+backup -.-> balthasar & caspar & melchior & linode
 monitoring --> social & matrix & apps & games
 social --> minio
 outline --> minio
 matrix --> jitsi
-
+privacy_vpn -.-> dual_mode
 %% Note
 note["共通: Tailscale メッシュ, Node Exporter, cAdvisor, Fail2ban"]
 end
-
 %% Apply styles
 class caspar,balthasar,melchior,linode,raspi homeServer
 class security,social,social_caspar,matrix,apps,games service
 class monitoring,prometheus,grafana,uptime monitoring
-class nsm,storage security
+class nsm,backup security
+class privacy_vpn,dual_mode network
 class tailscale,network_layer network
 ```
