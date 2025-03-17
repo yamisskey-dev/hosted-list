@@ -11,12 +11,12 @@ classDef network fill:#f5f3ff,stroke:#6d28d9,stroke-width:2px
 
 subgraph tailscale[Self-hosted Infrastructure]
     subgraph network_layer[Network Layer]
-        subgraph linode_vpn["linode-vpn - ubuntu - 1GB RAM"]
+        subgraph linode_vpn["linode-vpn - Ubuntu - 1GB RAM"]
             algo[Algo VPN]
             xray[Xray-core]
         end
         
-        subgraph linode_app["linode-app - ubuntu - 1GB RAM"]
+        subgraph linode_app["linode-app - Arch Linux - 1GB RAM"]
             impostor[Impostor]
         end
         
