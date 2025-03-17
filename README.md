@@ -10,6 +10,29 @@ classDef security fill:#fef2f2,stroke:#b91c1c,stroke-width:1px
 classDef network fill:#f5f3ff,stroke:#6d28d9,stroke-width:2px
 
 subgraph tailscale[Self-hosted Infrastructure]
+    subgraph network_layer[Network Layer]
+        subgraph linode_vpn["linode-vpn - ubuntu - 1GB RAM"]
+            algo[Algo VPN]
+            xray[Xray-core]
+        end
+        
+        subgraph linode_app["linode-app - Arch Linux - 1GB RAM"]
+            impostor[Impostor]
+        end
+        
+        subgraph raspi[raspi - RPi OS - 8GB/2TB]
+            subgraph backup[Backup & Storage]
+                borgbackup[Borg Backup Server]
+            end
+        end
+        
+        subgraph melchior[melchior - Debian - 16GB/1TB]
+            subgraph nsm[Security Monitoring]
+                tpot[T-Pot]
+            end
+        end
+    end
+    
     subgraph caspar[caspar - Hardened Gentoo - 16GB/1TB]
         subgraph security[Security]
             zitadel[Zitadel]
@@ -53,43 +76,24 @@ subgraph tailscale[Self-hosted Infrastructure]
             playig[playit.gg]
         end
     end
-    
-    subgraph network_layer[Network Layer]
-        subgraph linode["linode - Arch Linux - 1GB RAM"]
-                algo[Algo VPN]
-                xray[Xray-core]
-                impostor[Impostor]
-        end
-        
-        subgraph melchior[melchior - Debian - 16GB/1TB]
-            subgraph nsm[Security Monitoring]
-                tpot[T-Pot]
-            end
-        end
-        
-        subgraph raspi[raspi - RPi OS - 8GB/2TB]
-            subgraph backup[Backup & Storage]
-                borgbackup[Borg Backup Server]
-            end
-        end
-    end
+
 %% Dependencies
 zitadel --> outline
 nsm -.-> monitoring
-backup -.-> balthasar & caspar & melchior & linode
+backup -.-> balthasar & caspar & melchior & linode_vpn & linode_game
 monitoring --> social & matrix & apps & games
 social --> minio
 outline --> minio
 matrix --> jitsi
-privacy_vpn -.-> dual_mode
+
 %% Note
 note["共通: Tailscale メッシュ, Node Exporter, cAdvisor, Fail2ban"]
 end
+
 %% Apply styles
-class caspar,balthasar,melchior,linode,raspi homeServer
+class caspar,balthasar,melchior,linode_vpn,linode_app,raspi homeServer
 class security,social,social_caspar,matrix,apps,games service
 class monitoring,prometheus,grafana,uptime monitoring
 class nsm,backup security
-class privacy_vpn,dual_mode network
 class tailscale,network_layer network
 ```
