@@ -16,7 +16,7 @@ subgraph tailscale[Self-hosted Infrastructure]
             xray[Xray-core]
         end
         
-        subgraph linode_app["linode-app - Arch Linux - 1GB RAM"]
+        subgraph linode_app["linode-app - ubuntu - 1GB RAM"]
             impostor[Impostor]
         end
         
