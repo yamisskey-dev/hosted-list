@@ -14,6 +14,8 @@ subgraph tailscale[Self-hosted Infrastructure]
     subgraph caspar[caspar - Hardened Gentoo - 16GB/1TB]
         subgraph security[Security]
             zitadel[Zitadel]
+            zeek[Zeek]
+            suricata[Suricata]
             dnscrypt-proxy[DNSCrypt-Proxy]
         end
         subgraph monitoring[Monitoring]
@@ -71,7 +73,6 @@ subgraph tailscale[Self-hosted Infrastructure]
 
         subgraph raspi[raspi - RPi OS - 8GB/2TB]
             subgraph nsm2[Security Monitoring]
-                malcom[Malcom]
             end
         end
     end
