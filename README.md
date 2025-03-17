@@ -2,7 +2,6 @@
 
 ```mermaid
 graph TB
-
 %% Style definitions
 classDef homeServer fill:#f1f5f9,stroke:#475569,stroke-width:2px
 classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
@@ -31,7 +30,7 @@ subgraph tailscale[Self-hosted Infrastructure]
             nayamisskey[Misskey N/A]
         end
     end
-
+    
     subgraph balthasar[balthasar - Ubuntu - 32GB/1TB]
         minio[MinIO]
         subgraph social[Social]
@@ -55,24 +54,23 @@ subgraph tailscale[Self-hosted Infrastructure]
             playig[playit.gg]
         end
     end
-
+    
     subgraph network_layer[Network Layer]
-        direction TB
-        subgraph linode["linode Arch Linux Nanode 1GB"]
-            direction TB
+        subgraph linode["linode - Arch Linux - 1GB RAM"]
             algo[Algo VPN]
             warp[Cloudflare WARP⁺]
             xray[Xray-core]
         end
-
+        
         subgraph melchior[melchior - Debian - 16GB/1TB]
             subgraph nsm[Security Monitoring]
                 tpot[T-Pot]
             end
         end
-
+        
         subgraph raspi[raspi - RPi OS - 8GB/2TB]
-            subgraph nsm2[Security Monitoring]
+            subgraph storage[Storage & Backup]
+                reserve[Future Expansion / Backup]
             end
         end
     end
@@ -80,20 +78,20 @@ subgraph tailscale[Self-hosted Infrastructure]
 %% Dependencies
 zitadel --> outline
 nsm -.-> monitoring
-nsm2 -.-> monitoring
+storage -.-> minio
 monitoring --> social & matrix & apps & games
 social --> minio
 outline --> minio
 matrix --> jitsi
 
 %% Note
-note["Shared: Tailscale mesh, Node Exporter + cAdvisor"]
+note["共通: Tailscale メッシュ, Node Exporter, cAdvisor, Fail2ban"]
 end
 
 %% Apply styles
-class caspar,balthasar,melchior,linode homeServer
-class security,social,matrix,apps service
+class caspar,balthasar,melchior,linode,raspi homeServer
+class security,social,social_caspar,matrix,apps,games service
 class monitoring,prometheus,grafana,uptime monitoring
-class raspi,nsm,nsm2 security
+class nsm,storage security
 class tailscale,network_layer network
 ```
