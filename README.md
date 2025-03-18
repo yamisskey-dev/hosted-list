@@ -80,7 +80,7 @@ subgraph tailscale[Self-hosted Infrastructure]
 %% Dependencies
 zitadel --> outline
 nsm -.-> monitoring
-backup -.-> balthasar & caspar & melchior & linode_vpn & linode_game
+backup -.-> balthasar & caspar & melchior & linode_vpn & linode_app
 monitoring --> social & matrix & apps & games
 social --> minio
 outline --> minio
