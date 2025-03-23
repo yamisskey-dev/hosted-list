@@ -17,7 +17,7 @@ subgraph tailscale[Self-hosted Infrastructure]
         end
         
         subgraph linode_app["linode-app - Arch Linux - 1GB RAM"]
-            impostor[Impostor]
+            stalwart[Stalwart]
         end
         
         subgraph raspi[raspi - RPi OS - 8GB/2TB]
