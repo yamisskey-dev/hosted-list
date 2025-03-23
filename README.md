@@ -16,10 +16,6 @@ subgraph tailscale[Self-hosted Infrastructure]
             xray[Xray-core]
         end
         
-        subgraph linode_app["linode-app - Arch Linux - 1GB RAM"]
-            stalwart[Stalwart]
-        end
-        
         subgraph raspi[raspi - RPi OS - 8GB/2TB]
             subgraph backup[Backup & Storage]
                 borgbackup[Borg]
@@ -36,6 +32,7 @@ subgraph tailscale[Self-hosted Infrastructure]
     subgraph caspar[caspar - Hardened Gentoo - 16GB/1TB]
         subgraph security[Security]
             zitadel[Zitadel]
+            stalwart[Stalwart]
             zeek[Zeek]
             suricata[Suricata]
             dnscrypt-proxy[DNSCrypt-Proxy]
@@ -80,7 +77,7 @@ subgraph tailscale[Self-hosted Infrastructure]
 %% Dependencies
 zitadel --> outline
 nsm -.-> monitoring
-backup -.-> balthasar & caspar & melchior & linode_vpn & linode_app
+backup -.-> balthasar & caspar & melchior & linode_vpn
 monitoring --> social & matrix & apps & games
 social --> minio
 outline --> minio
