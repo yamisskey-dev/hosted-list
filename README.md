@@ -34,7 +34,6 @@ subgraph tailscale[Self-hosted Infrastructure]
             zitadel[Zitadel]
             stalwart[Stalwart]
             zeek[Zeek]
-            suricata[Suricata]
             dnscrypt-proxy[DNSCrypt-Proxy]
         end
         subgraph monitoring[Monitoring]
@@ -52,6 +51,7 @@ subgraph tailscale[Self-hosted Infrastructure]
     end
     
     subgraph balthasar[balthasar - Ubuntu - 32GB/1TB]
+        suricata[Suricata]
         minio[MinIO]
         subgraph social[Social]
             yamisskey[Misskey]
