@@ -14,6 +14,11 @@ subgraph tailscale[Self-hosted Infrastructure]
         subgraph linode_vpn["linode-vpn - Ubuntu - 1GB RAM"]
             algo[Algo VPN]
             xray[Xray-core]
+            warp[Cloudflare WARP]
+        end
+
+        subgraph linode_app["linode-app - Ubuntu - 1GB RAM"]
+            impostor[Impostor]
         end
         
         subgraph raspi[raspi - RPi OS - 8GB/2TB]
