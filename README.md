@@ -109,13 +109,14 @@ class cloudflared_b,cloudflared_c cloudflare
 ```
 ```mermaid
 graph TB
-%% Style definitions - メインサーバー図と同じ定義
+%% Style definitions
 classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
 classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:1px
 classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef common fill:#fef3c7,stroke:#b45309,stroke-width:1px,font-style:italic
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
+classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
 
 %% Support Infrastructure with connections to main servers
 subgraph support[Support Infrastructure]
@@ -161,9 +162,9 @@ subgraph support[Support Infrastructure]
         end
     end
     
-    %% Cloudflare and Internet
+    %% External networks
     cloudflare_network[Cloudflare Network]:::cloudflare
-    internet((Internet)):::cloudflare
+    internet((Internet)):::internet
 end
 
 %% Connections to proxies
@@ -179,6 +180,12 @@ borgbackup -.-> caspar
 
 %% Cloudflare connections
 cloudflared_b & cloudflared_c --> cloudflare_network --> internet
+
+%% New connections - direct internet access
+summaryproxy --> internet
+mediaproxy --> internet
+warp --> internet
+impostor --> internet
 
 %% Apply styles
 class balthasar,caspar,vpn,proxy,app_server,raspi homeServer
