@@ -18,6 +18,7 @@ subgraph tailscale[Self-hosted Infrastructure]
         subgraph linode_proxy["linode-proxy - Ubuntu - 1GB RAM"]
             summaryproxy[Summary proxy for Misskey]
             mediaproxy[Media proxy for Misskey]
+            squid[Squid]
         end
         subgraph linode_app["linode-app - Ubuntu - 1GB RAM"]
             impostor[Impostor]
