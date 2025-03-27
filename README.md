@@ -8,7 +8,6 @@ classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef monitoring fill:#ecfdf5,stroke:#047857,stroke-width:1px
 classDef security fill:#fef2f2,stroke:#b91c1c,stroke-width:1px
 classDef network fill:#f5f3ff,stroke:#6d28d9,stroke-width:2px
-
 subgraph tailscale[Self-hosted Infrastructure]
     subgraph network_layer[Network Layer]
         subgraph linode_vpn["linode-vpn - Ubuntu - 1GB RAM"]
@@ -16,11 +15,13 @@ subgraph tailscale[Self-hosted Infrastructure]
             xray[Xray-core]
             warp[Cloudflare WARP]
         end
-
+        subgraph linode_proxy["linode-proxy - Ubuntu - 1GB RAM"]
+            summaryproxy[Summary proxy for Misskey]
+            mediaproxy[Media proxy for Misskey]
+        end
         subgraph linode_app["linode-app - Ubuntu - 1GB RAM"]
             impostor[Impostor]
         end
-        
         subgraph raspi[raspi - RPi OS - 8GB/2TB]
             subgraph backup[Backup & Storage]
                 borgbackup[Borg]
@@ -78,6 +79,7 @@ subgraph tailscale[Self-hosted Infrastructure]
             playig[playit.gg]
         end
     end
+end
 
 %% Dependencies
 zitadel --> outline
@@ -87,15 +89,13 @@ monitoring --> social & matrix & apps & games
 social --> minio
 outline --> minio
 matrix --> jitsi
-
 %% Note
 note["共通: Tailscale メッシュ, Node Exporter, cAdvisor, Fail2ban"]
-end
 
 %% Apply styles
-class caspar,balthasar,melchior,linode_vpn,linode_app,raspi homeServer
+class caspar,balthasar,melchior,linode_vpn,linode_proxy,linode_app,raspi homeServer
 class security,social,social_caspar,matrix,apps,games service
-class monitoring,prometheus,grafana,uptime monitoring
-class nsm,backup security
-class tailscale,network_layer network
+class monitoring monitoring
+class security security
+class network_layer network
 ```
