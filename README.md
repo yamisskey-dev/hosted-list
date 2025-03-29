@@ -168,7 +168,9 @@ subgraph support[Support Infrastructure]
 end
 %% Connections to proxies
 yamisskey --> summaryproxy & mediaproxy
+yamisskey --> squid
 nayamisskey --> summaryproxy & mediaproxy
+nayamisskey --> squid
 %% VPN traffic flow
 balthasar & caspar --> algo --> xray --> warp
 %% Backup connections
