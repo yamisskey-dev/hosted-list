@@ -117,7 +117,6 @@ classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef common fill:#fef3c7,stroke:#b45309,stroke-width:1px,font-style:italic
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
-
 %% Support Infrastructure with connections to main servers
 subgraph support[Support Infrastructure]
     direction TB
@@ -135,6 +134,7 @@ subgraph support[Support Infrastructure]
             summaryproxy[Summary proxy]:::service
             mediaproxy[Media proxy]:::service
             squid[Squid]:::security
+            cloudflared_proxy[Cloudflared]:::cloudflare
         end
         
         subgraph app_server[linode-app]
@@ -166,29 +166,25 @@ subgraph support[Support Infrastructure]
     cloudflare_network[Cloudflare Network]:::cloudflare
     internet((Internet)):::internet
 end
-
 %% Connections to proxies
 yamisskey --> summaryproxy & mediaproxy
 nayamisskey --> summaryproxy & mediaproxy
-
 %% VPN traffic flow
 balthasar & caspar --> algo --> xray --> warp
-
 %% Backup connections
 borgbackup -.-> balthasar
 borgbackup -.-> caspar
-
 %% Cloudflare connections
-cloudflared_b & cloudflared_c --> cloudflare_network --> internet
-
-%% New connections - direct internet access
-summaryproxy --> internet
-mediaproxy --> internet
+cloudflared_b & cloudflared_c --> cloudflare_network
+cloudflared_proxy --> cloudflare_network
+cloudflare_network --> internet
+%% Proxy service connections to Cloudflared
+summaryproxy & mediaproxy & squid --> cloudflared_proxy
+%% Direct internet connections (non-Cloudflared)
 warp --> internet
 impostor --> internet
-
 %% Apply styles
 class balthasar,caspar,vpn,proxy,app_server,raspi homeServer
 class yamisskey,nayamisskey,algo,xray,warp,summaryproxy,mediaproxy,squid,impostor,borgbackup service
-class cloudflared_b,cloudflared_c,cloudflare_network cloudflare
+class cloudflared_b,cloudflared_c,cloudflared_proxy,cloudflare_network cloudflare
 ```
