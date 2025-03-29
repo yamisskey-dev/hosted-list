@@ -182,8 +182,9 @@ cloudflared_proxy --> cloudflare_network
 cloudflare_network --> internet
 %% Proxy service connections to Cloudflared
 summaryproxy & mediaproxy & squid --> cloudflared_proxy
+%% WARP goes through Cloudflare Network
+warp --> cloudflare_network
 %% Direct internet connections (non-Cloudflared)
-warp --> internet
 impostor --> internet
 %% Apply styles
 class balthasar,caspar,vpn,proxy,app_server,raspi homeServer
