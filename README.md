@@ -35,6 +35,7 @@ subgraph main_servers[Main Servers]
         end
         
         subgraph apps[Apps]
+            lemmy[Lemmy]
             outline[Outline]
             vikunja[Vikunja]
             cryptpad[CryptPad]
@@ -117,6 +118,7 @@ classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef common fill:#fef3c7,stroke:#b45309,stroke-width:1px,font-style:italic
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
+
 %% Support Infrastructure with connections to main servers
 subgraph support[Support Infrastructure]
     direction TB
@@ -136,10 +138,6 @@ subgraph support[Support Infrastructure]
             squid[Squid]:::security
             cloudflared_proxy[Cloudflared]:::cloudflare
         end
-        
-        subgraph app_server[linode-app]
-            impostor[Impostor]:::service
-        end
     end
     
     %% Borg backup server
@@ -148,7 +146,7 @@ subgraph support[Support Infrastructure]
     end
     
     %% Main server references with their social services
-    subgraph main_servers[Main Servers References]
+    subgraph main_servers[Main Servers]
         direction LR
         
         subgraph balthasar[balthasar]
@@ -166,28 +164,33 @@ subgraph support[Support Infrastructure]
     cloudflare_network[Cloudflare Network]:::cloudflare
     internet((Internet)):::internet
 end
+
 %% Connections to proxies
 yamisskey --> summaryproxy & mediaproxy
 yamisskey --> squid
 nayamisskey --> summaryproxy & mediaproxy
 nayamisskey --> squid
+
 %% VPN traffic flow
 balthasar & caspar --> algo --> xray --> warp
+
 %% Backup connections
 borgbackup -.-> balthasar
 borgbackup -.-> caspar
+
 %% Cloudflare connections
 cloudflared_b & cloudflared_c --> cloudflare_network
 cloudflared_proxy --> cloudflare_network
 cloudflare_network --> internet
+
 %% Proxy service connections to Cloudflared
 summaryproxy & mediaproxy & squid --> cloudflared_proxy
+
 %% WARP goes through Cloudflare Network
 warp --> cloudflare_network
-%% Direct internet connections (non-Cloudflared)
-impostor --> internet
+
 %% Apply styles
-class balthasar,caspar,vpn,proxy,app_server,raspi homeServer
-class yamisskey,nayamisskey,algo,xray,warp,summaryproxy,mediaproxy,squid,impostor,borgbackup service
+class balthasar,caspar,vpn,proxy,raspi homeServer
+class yamisskey,nayamisskey,algo,xray,warp,summaryproxy,mediaproxy,squid,borgbackup service
 class cloudflared_b,cloudflared_c,cloudflared_proxy,cloudflare_network cloudflare
 ```
