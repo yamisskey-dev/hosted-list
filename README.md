@@ -118,6 +118,7 @@ classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef common fill:#fef3c7,stroke:#b45309,stroke-width:1px,font-style:italic
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
+classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
 
 %% Support Infrastructure with connections to main servers
 subgraph support[Support Infrastructure]
@@ -140,9 +141,9 @@ subgraph support[Support Infrastructure]
         end
     end
     
-    %% Borg backup server
+    %% Borg backup server with improved details
     subgraph raspi[raspi]
-        borgbackup[Borg]:::service
+        borg_client[Borg Client]:::backup
     end
     
     %% Main server references with their social services
@@ -152,11 +153,13 @@ subgraph support[Support Infrastructure]
         subgraph balthasar[balthasar]
             yamisskey[Misskey]:::service
             cloudflared_b[Cloudflared]:::cloudflare
+            borg_b[Borg Server]:::backup
         end
         
         subgraph caspar[caspar]
             nayamisskey[Misskey N/A]:::service
             cloudflared_c[Cloudflared]:::cloudflare
+            borg_c[Borg Server]:::backup
         end
     end
     
@@ -174,9 +177,9 @@ nayamisskey --> squid
 %% VPN traffic flow
 balthasar & caspar --> algo --> xray --> warp
 
-%% Backup connections
-borgbackup -.-> balthasar
-borgbackup -.-> caspar
+%% Backup connections - improved with SSH details
+borg_client -- "SSH + Borg Protocol" --> borg_b
+borg_client -- "SSH + Borg Protocol" --> borg_c
 
 %% Cloudflare connections
 cloudflared_b & cloudflared_c --> cloudflare_network
@@ -191,6 +194,7 @@ warp --> cloudflare_network
 
 %% Apply styles
 class balthasar,caspar,vpn,proxy,raspi homeServer
-class yamisskey,nayamisskey,algo,xray,warp,summaryproxy,mediaproxy,squid,borgbackup service
+class yamisskey,nayamisskey,algo,xray,warp,summaryproxy,mediaproxy,squid service
 class cloudflared_b,cloudflared_c,cloudflared_proxy,cloudflare_network cloudflare
+class borg_client,borg_b,borg_c backup
 ```
