@@ -15,7 +15,7 @@ subgraph main_servers[Main Servers]
     direction LR
     
     %% Common services updated to include DNSCrypt
-    common["共通: Tailscale, Node Exporter, cAdvisor, Fail2ban, DNSCrypt-Proxy"]:::common
+    common["共通: Tailscale, Node Exporter, cAdvisor, Fail2ban, DNSCrypt-Proxy, Borg"]:::common
     
     subgraph balthasar[balthasar]
         direction TB
