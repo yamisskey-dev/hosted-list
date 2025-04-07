@@ -178,8 +178,8 @@ nayamisskey --> squid
 balthasar & caspar --> algo --> xray --> warp
 
 %% Backup connections - improved with SSH details
-borg_client -- "SSH + Borg Protocol" --> borg_b
-borg_client -- "SSH + Borg Protocol" --> borg_c
+borg_b -- "Tailscale SSH" --> borg_client
+borg_c -- "Tailscale SSH" --> borg_client
 
 %% Cloudflare connections
 cloudflared_b & cloudflared_c --> cloudflare_network
