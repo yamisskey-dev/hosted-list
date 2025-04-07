@@ -113,13 +113,66 @@ graph TB
 %% Style definitions
 classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
 classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
-classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:1px
+classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
+classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
+
+%% External storage services
+r2[Cloudflare R2]:::storage
+filen[Filen]:::storage
+
+%% Support Infrastructure 
+subgraph support[Support Infrastructure]
+    direction TB
+    
+    %% Borg backup server
+    subgraph raspi[raspi]
+        borg_client[Borg Client]:::backup
+    end
+    
+    %% Main servers with backup systems
+    subgraph main_servers[Main Servers]
+        direction LR
+        
+        subgraph balthasar[balthasar]
+            yamisskey[Misskey]:::service
+            yamisskey_db[(Misskey DB)]:::service
+            minio[MinIO]:::storage
+            borg_b[Borg Server]:::backup
+        end
+        
+        subgraph caspar[caspar]
+            nayamisskey[Misskey N/A]:::service
+            borg_c[Borg Server]:::backup
+        end
+    end
+end
+
+%% DB backup connections to external storage (independent from Borg)
+yamisskey_db -. "DB Backup" .-> r2
+yamisskey_db -. "DB Backup" .-> filen
+
+%% Borg backup connections
+borg_b -- "Tailscale SSH" --> borg_client
+borg_c -- "Tailscale SSH" --> borg_client
+
+%% Internal service connections
+yamisskey --> yamisskey_db
+yamisskey --> minio
+
+%% Apply styles
+class balthasar,caspar,raspi homeServer
+class yamisskey,nayamisskey,yamisskey_db service
+class borg_client,borg_b,borg_c backup
+class r2,filen,minio storage
+```
+```mermaid
+graph TB
+%% Style definitions
+classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
+classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
-classDef common fill:#fef3c7,stroke:#b45309,stroke-width:1px,font-style:italic
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
-classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
-
 %% Support Infrastructure with connections to main servers
 subgraph support[Support Infrastructure]
     direction TB
@@ -141,11 +194,6 @@ subgraph support[Support Infrastructure]
         end
     end
     
-    %% Borg backup server with improved details
-    subgraph raspi[raspi]
-        borg_client[Borg Client]:::backup
-    end
-    
     %% Main server references with their social services
     subgraph main_servers[Main Servers]
         direction LR
@@ -153,13 +201,11 @@ subgraph support[Support Infrastructure]
         subgraph balthasar[balthasar]
             yamisskey[Misskey]:::service
             cloudflared_b[Cloudflared]:::cloudflare
-            borg_b[Borg Server]:::backup
         end
         
         subgraph caspar[caspar]
             nayamisskey[Misskey N/A]:::service
             cloudflared_c[Cloudflared]:::cloudflare
-            borg_c[Borg Server]:::backup
         end
     end
     
@@ -167,34 +213,26 @@ subgraph support[Support Infrastructure]
     cloudflare_network[Cloudflare Network]:::cloudflare
     internet((Internet)):::internet
 end
-
 %% Connections to proxies
 yamisskey --> summaryproxy & mediaproxy
 yamisskey --> squid
 nayamisskey --> summaryproxy & mediaproxy
 nayamisskey --> squid
-
+%% Direct connections from Misskey to Cloudflared
+yamisskey --> cloudflared_b
+nayamisskey --> cloudflared_c
 %% VPN traffic flow
 balthasar & caspar --> algo --> xray --> warp
-
-%% Backup connections - improved with SSH details
-borg_b -- "Tailscale SSH" --> borg_client
-borg_c -- "Tailscale SSH" --> borg_client
-
 %% Cloudflare connections
 cloudflared_b & cloudflared_c --> cloudflare_network
 cloudflared_proxy --> cloudflare_network
 cloudflare_network --> internet
-
 %% Proxy service connections to Cloudflared
 summaryproxy & mediaproxy & squid --> cloudflared_proxy
-
 %% WARP goes through Cloudflare Network
 warp --> cloudflare_network
-
 %% Apply styles
-class balthasar,caspar,vpn,proxy,raspi homeServer
+class balthasar,caspar,vpn,proxy homeServer
 class yamisskey,nayamisskey,algo,xray,warp,summaryproxy,mediaproxy,squid service
 class cloudflared_b,cloudflared_c,cloudflared_proxy,cloudflare_network cloudflare
-class borg_client,borg_b,borg_c backup
 ```
