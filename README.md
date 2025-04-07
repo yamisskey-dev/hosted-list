@@ -160,8 +160,7 @@ yamisskey --> minio
 yamisskey_db -- "DB Backup" --> r2
 yamisskey_db -- "DB Backup" --> filen
 
-%% MinIO backup connections (NEW)
-minio -- "E2E Encrypted Backup" --> filen
+%% MinIO backup connections (Borg only)
 minio -- "Borg Backup" --> borg_b
 
 %% Borg backup connections
