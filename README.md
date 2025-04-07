@@ -117,16 +117,20 @@ classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
 classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
 
 %% External storage services
-r2[Cloudflare R2]:::storage
-filen[Filen]:::storage
+subgraph external[外部ストレージ]
+    direction LR
+    r2[Cloudflare R2]:::storage
+    filen[Filen\nE2E暗号化]:::storage
+end
 
 %% Support Infrastructure 
-subgraph support[Support Infrastructure]
+subgraph internal[内部インフラ]
     direction TB
     
     %% Borg backup server
     subgraph raspi[raspi]
         borg_client[Borg Client]:::backup
+        borg_data[(Backup Storage)]:::backup
     end
     
     %% Main servers with backup systems
@@ -134,6 +138,7 @@ subgraph support[Support Infrastructure]
         direction LR
         
         subgraph balthasar[balthasar]
+            direction TB
             yamisskey[Misskey]:::service
             yamisskey_db[(Misskey DB)]:::service
             minio[MinIO]:::storage
@@ -147,22 +152,27 @@ subgraph support[Support Infrastructure]
     end
 end
 
-%% DB backup connections to external storage (independent from Borg)
-yamisskey_db -. "DB Backup" .-> r2
-yamisskey_db -. "DB Backup" .-> filen
-
-%% Borg backup connections
-borg_b -- "Tailscale SSH" --> borg_client
-borg_c -- "Tailscale SSH" --> borg_client
-
 %% Internal service connections
 yamisskey --> yamisskey_db
 yamisskey --> minio
 
+%% DB backup connections to external storage
+yamisskey_db -- "DB Backup" --> r2
+yamisskey_db -- "DB Backup" --> filen
+
+%% MinIO backup connections (NEW)
+minio -- "E2E Encrypted Backup" --> filen
+minio -- "Borg Backup" --> borg_b
+
+%% Borg backup connections
+borg_b -- "Tailscale SSH" --> borg_client
+borg_c -- "Tailscale SSH" --> borg_client
+borg_client --> borg_data
+
 %% Apply styles
 class balthasar,caspar,raspi homeServer
 class yamisskey,nayamisskey,yamisskey_db service
-class borg_client,borg_b,borg_c backup
+class borg_client,borg_b,borg_c,borg_data backup
 class r2,filen,minio storage
 ```
 ```mermaid
