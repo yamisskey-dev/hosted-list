@@ -191,6 +191,7 @@ subgraph support[Support Infrastructure]
         subgraph proxy[linode-proxy]
             summaryproxy[Summary proxy]:::service
             mediaproxy[Media proxy]:::service
+            coturn[TURN]:::service
             squid[Squid]:::security
             cloudflared_proxy[Cloudflared]:::cloudflare
         end
