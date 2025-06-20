@@ -93,7 +93,7 @@ uptime -.-> caspar
 playig --> internet
 cloudflared_b --> internet
 cloudflared_c --> internet
-yamisskey & element & outline & vikunja & cryptpad & searxng --> cloudflared_b
+yamisskey & neoquesdon & element & synapse & jitsi & outline & vikunja & cryptpad & searxng & lemmy--> cloudflared_b
 nayamisskey & grafana & ctfd & zitadel --> cloudflared_c
 
 %% Apply styles
