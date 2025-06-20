@@ -83,6 +83,7 @@ suricata --> zeek
 zitadel --> outline
 minio --> social & outline
 element --> synapse --> jitsi
+jitsi --> playig
 minecraft --> playig
 prometheus --> grafana
 uptime -.-> balthasar
@@ -191,7 +192,6 @@ subgraph support[Support Infrastructure]
         subgraph proxy[linode-proxy]
             summaryproxy[Summary proxy]:::service
             mediaproxy[Media proxy]:::service
-            coturn[TURN]:::service
             squid[Squid]:::security
             cloudflared_proxy[Cloudflared]:::cloudflare
         end
