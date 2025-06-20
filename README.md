@@ -82,7 +82,8 @@ end
 suricata --> zeek
 zitadel --> outline
 minio --> social & outline
-element --> synapse --> jitsi
+element --> synapse
+element --> jitsi
 jitsi --> playig
 minecraft --> playig
 prometheus --> grafana
