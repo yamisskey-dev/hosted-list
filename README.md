@@ -22,6 +22,7 @@ subgraph main_servers[Main Servers]
         minio[MinIO]
         suricata[Suricata]
         cloudflared_b[Cloudflared]:::cloudflare
+        playig[playit.gg]
         
         subgraph social[Social]
             yamisskey[Misskey]
@@ -44,7 +45,6 @@ subgraph main_servers[Main Servers]
         
         subgraph games[Games]
             minecraft[Minecraft]
-            playig[playit.gg]
         end
     end
     
@@ -90,6 +90,7 @@ uptime -.-> balthasar
 uptime -.-> caspar
 
 %% Cloudflared connections for external access
+playig --> internet
 cloudflared_b --> internet
 cloudflared_c --> internet
 yamisskey & element & outline & vikunja & cryptpad & searxng --> cloudflared_b
