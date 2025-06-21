@@ -32,7 +32,6 @@ subgraph main_servers[Main Servers]
         subgraph matrix[Matrix]
             synapse[Synapse]
             element[Element]
-            jitsi[Jitsi Meet]
         end
         
         subgraph apps[Apps]
@@ -40,7 +39,6 @@ subgraph main_servers[Main Servers]
             outline[Outline]
             vikunja[Vikunja]
             cryptpad[CryptPad]
-            searxng[SearXNG]
         end
         
         subgraph games[Games]
@@ -54,7 +52,6 @@ subgraph main_servers[Main Servers]
         
         subgraph security[Security]
             zitadel[Zitadel]
-            stalwart[Stalwart]
             zeek[Zeek]
         end
         
@@ -83,7 +80,6 @@ suricata --> zeek
 zitadel --> outline
 minio --> social & outline
 element --> synapse
-element --> jitsi
 minecraft --> playig
 prometheus --> grafana
 uptime -.-> balthasar
@@ -93,7 +89,7 @@ uptime -.-> caspar
 playig --> internet
 cloudflared_b --> internet
 cloudflared_c --> internet
-yamisskey & neoquesdon & element & synapse & jitsi & outline & vikunja & cryptpad & searxng & lemmy--> cloudflared_b
+yamisskey & neoquesdon & element & synapse & outline & vikunja & cryptpad & lemmy--> cloudflared_b
 nayamisskey & grafana & ctfd & zitadel --> cloudflared_c
 
 %% Apply styles
@@ -193,7 +189,6 @@ subgraph support[Support Infrastructure]
         subgraph proxy[linode-proxy]
             summaryproxy[Summary proxy]:::service
             mediaproxy[Media proxy]:::service
-            coturn[TURN]:::service
             squid[Squid]:::security
             cloudflared_proxy[Cloudflared]:::cloudflare
         end
