@@ -68,6 +68,7 @@ subgraph main_servers[Main Servers]
         
         subgraph social_c[Social]
             nayamisskey[Misskey N/A]
+            nostream[Nostr]
         end
     end
     
@@ -90,7 +91,7 @@ playig --> internet
 cloudflared_b --> internet
 cloudflared_c --> internet
 yamisskey & neoquesdon & element & synapse & outline & vikunja & cryptpad & lemmy--> cloudflared_b
-nayamisskey & grafana & ctfd & zitadel --> cloudflared_c
+nayamisskey & nostream & grafana & ctfd & zitadel --> cloudflared_c
 
 %% Apply styles
 class balthasar,caspar homeServer
