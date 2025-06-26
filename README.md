@@ -9,12 +9,13 @@ classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:1px
 classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef common fill:#fef3c7,stroke:#b45309,stroke-width:1px,font-style:italic
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
+classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
 
 %% Main Infrastructure
 subgraph main_servers[Main Servers]
     direction LR
     
-    %% Common services updated to include DNSCrypt
+    %% Common services
     common["共通: Tailscale, Node Exporter, cAdvisor, Fail2ban, DNSCrypt-Proxy, Borg"]:::common
     
     subgraph balthasar[balthasar]
@@ -22,7 +23,6 @@ subgraph main_servers[Main Servers]
         minio[MinIO]
         suricata[Suricata]
         cloudflared_b[Cloudflared]:::cloudflare
-        playig[playit.gg]
         
         subgraph social[Social]
             yamisskey[Misskey]
@@ -39,10 +39,6 @@ subgraph main_servers[Main Servers]
             outline[Outline]
             vikunja[Vikunja]
             cryptpad[CryptPad]
-        end
-        
-        subgraph games[Games]
-            minecraft[Minecraft]
         end
     end
     
@@ -72,6 +68,15 @@ subgraph main_servers[Main Servers]
         end
     end
     
+    subgraph melchior[melchior - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
+        direction TB
+        playig[playit.gg]
+        
+        subgraph games[Games]
+            minecraft[Minecraft Java]
+        end
+    end
+    
     %% External entity
     internet((Internet)):::cloudflare
 end
@@ -85,6 +90,7 @@ minecraft --> playig
 prometheus --> grafana
 uptime -.-> balthasar
 uptime -.-> caspar
+uptime -.-> melchior
 
 %% Cloudflared connections for external access
 playig --> internet
@@ -95,6 +101,7 @@ nayamisskey & nostream & grafana & ctfd & zitadel --> cloudflared_c
 
 %% Apply styles
 class balthasar,caspar homeServer
+class melchior rpi
 class security,social,social_c,matrix,apps,games,CTF service
 class monitoring monitoring
 class security security
