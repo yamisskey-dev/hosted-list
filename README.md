@@ -68,7 +68,7 @@ subgraph main_servers[Main Servers]
         end
     end
     
-    subgraph melchior[melchior - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
+    subgraph raspberrypi[raspberrypi - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
         direction TB
         playig[playit.gg]
         
@@ -90,7 +90,7 @@ minecraft --> playig
 prometheus --> grafana
 uptime -.-> balthasar
 uptime -.-> caspar
-uptime -.-> melchior
+uptime -.-> raspberrypi
 
 %% Cloudflared connections for external access
 playig --> internet
@@ -101,7 +101,7 @@ nayamisskey & nostream & grafana & ctfd & zitadel --> cloudflared_c
 
 %% Apply styles
 class balthasar,caspar homeServer
-class melchior rpi
+class raspberrypi rpi
 class security,social,social_c,matrix,apps,games,CTF service
 class monitoring monitoring
 class security security
