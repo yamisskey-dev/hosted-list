@@ -181,6 +181,7 @@ classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
+
 %% Support Infrastructure with connections to main servers
 subgraph support[Support Infrastructure]
     direction TB
@@ -190,8 +191,6 @@ subgraph support[Support Infrastructure]
         
         subgraph vpn[linode-vpn]
             algo[Algo VPN]:::security
-            xray[Xray-core]:::security
-            warp[WARP]:::security
         end
         
         subgraph proxy[linode-proxy]
@@ -221,26 +220,28 @@ subgraph support[Support Infrastructure]
     cloudflare_network[Cloudflare Network]:::cloudflare
     internet((Internet)):::internet
 end
+
 %% Connections to proxies
 yamisskey --> summaryproxy & mediaproxy
-yamisskey --> squid
 nayamisskey --> summaryproxy & mediaproxy
-nayamisskey --> squid
+
 %% Direct connections from Misskey to Cloudflared
 yamisskey --> cloudflared_b
 nayamisskey --> cloudflared_c
-%% VPN traffic flow
-balthasar & caspar --> algo --> xray --> warp
+
+%% Misskey connections to VPN and proxy
+yamisskey --> algo & squid
+nayamisskey --> algo & squid
+
+%% Direct VPN and proxy connections to internet
+algo --> internet
+squid --> internet
+
 %% Cloudflare connections
 cloudflared_b & cloudflared_c --> cloudflare_network
 cloudflared_proxy --> cloudflare_network
 cloudflare_network --> internet
+
 %% Proxy service connections to Cloudflared
-summaryproxy & mediaproxy & squid --> cloudflared_proxy
-%% WARP goes through Cloudflare Network
-warp --> cloudflare_network
-%% Apply styles
-class balthasar,caspar,vpn,proxy homeServer
-class yamisskey,nayamisskey,algo,xray,warp,summaryproxy,mediaproxy,squid service
-class cloudflared_b,cloudflared_c,cloudflared_proxy,cloudflare_network cloudflare
+summaryproxy & mediaproxy --> cloudflared_proxy
 ```
