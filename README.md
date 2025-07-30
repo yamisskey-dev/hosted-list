@@ -21,7 +21,6 @@ subgraph main_servers[Main Servers]
     subgraph balthasar[balthasar]
         direction TB
         minio[MinIO]
-        suricata[Suricata]
         cloudflared_b[Cloudflared]:::cloudflare
         
         subgraph social[Social]
@@ -48,7 +47,6 @@ subgraph main_servers[Main Servers]
         
         subgraph security[Security]
             zitadel[Zitadel]
-            zeek[Zeek]
         end
         
         subgraph monitoring[Monitoring]
@@ -82,7 +80,6 @@ subgraph main_servers[Main Servers]
 end
 
 %% Core connections between main servers
-suricata --> zeek
 zitadel --> outline
 minio --> social & outline
 element --> synapse
