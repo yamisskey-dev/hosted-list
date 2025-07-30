@@ -112,6 +112,89 @@ graph TB
 %% Style definitions
 classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
 classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
+classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:1px
+classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
+classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
+classDef network fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+
+%% Proxmox Host
+subgraph proxmox["GMKtec NucBox K10 - Proxmox VE<br/>Core i9-13900HK, 64GB DDR5, 1TB NVMe"]
+    %% Storage Configuration
+    subgraph storage["Storage Pools"]
+        local["local<br/>ISO, Templates, Backups"]:::storage
+        local_lvm["local-lvm<br/>VM Disks"]:::storage
+    end
+    
+    %% Network Bridges
+    subgraph networks["Virtual Networks"]
+        vmbr0["vmbr0 - External<br/>WAN Interface"]:::network
+        vmbr1["vmbr1 - Internal LAN<br/>10.0.0.0/24"]:::network
+        vmbr2["vmbr2 - DMZ<br/>192.168.100.0/24"]:::network
+        vmbr3["vmbr3 - Management<br/>172.16.0.0/24"]:::network
+    end
+    
+    %% Virtual Machines
+    subgraph vms["Virtual Machines"]
+        subgraph pfsense_vm["pfSense VM - 4c/8GB/32GB"]
+            pfsense["pfSense 2.7+"]:::security
+            suricata["Suricata IDS/IPS"]:::security
+            haproxy["HAProxy"]:::service
+            openvpn["OpenVPN"]:::security
+        end
+        
+        subgraph omv_vm["OpenMediaVault VM - 4c/16GB/600GB"]
+            omv["OpenMediaVault 7"]:::storage
+            smb["SMB/CIFS Shares"]:::storage
+            nfs["NFS Shares"]:::storage
+            snapraid["SnapRAID"]:::storage
+        end
+        
+        subgraph tpot_vm["T-Pot VM - 6c/24GB/200GB"]
+            tpot["T-Pot 24.04+"]:::security
+            cowrie["Cowrie SSH Honeypot"]:::security
+            dionaea["Dionaea Multi-protocol"]:::security
+            elasticpot["ElasticPot"]:::security
+            kibana_tpot["Kibana Dashboard"]:::monitoring
+        end
+        
+        subgraph malcolm_vm["Malcolm VM - 8c/32GB/500GB"]
+            malcolm["Malcolm"]:::monitoring
+            elasticsearch["Elasticsearch"]:::monitoring
+            logstash["Logstash"]:::monitoring
+            zeek["Zeek Network Analysis"]:::monitoring
+            suricata_malcolm["Suricata IDS"]:::security
+            kibana_malcolm["Kibana Analytics"]:::monitoring
+        end
+    end
+end
+
+%% Network connections
+vmbr0 --> pfsense_vm
+vmbr1 --> omv_vm
+vmbr2 --> tpot_vm
+vmbr2 --> malcolm_vm
+vmbr3 --> pfsense_vm
+
+%% Storage connections
+local_lvm --> pfsense_vm
+local_lvm --> omv_vm
+local_lvm --> tpot_vm
+local_lvm --> malcolm_vm
+
+%% Service connections
+tpot --> kibana_tpot
+malcolm --> elasticsearch
+suricata --> malcolm
+
+%% Apply styles
+class proxmox homeServer
+class pfsense_vm,omv_vm,tpot_vm,malcolm_vm homeServer
+```
+```mermaid
+graph TB
+%% Style definitions
+classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
+classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
 classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
 
