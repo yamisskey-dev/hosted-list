@@ -10,6 +10,7 @@ classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef common fill:#fef3c7,stroke:#b45309,stroke-width:1px,font-style:italic
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
+classDef proxy fill:#e0e7ff,stroke:#3730a3,stroke-width:2px
 
 %% Main Infrastructure
 subgraph main_servers[Main Servers]
@@ -22,6 +23,7 @@ subgraph main_servers[Main Servers]
         direction TB
         minio[MinIO]
         cloudflared_b[Cloudflared]:::cloudflare
+        nginx_b[Nginx + ModSecurity<br/>Reverse Proxy]:::proxy
         
         subgraph social[Social]
             yamisskey[Misskey]
@@ -44,6 +46,7 @@ subgraph main_servers[Main Servers]
     subgraph caspar[caspar]
         direction TB
         cloudflared_c[Cloudflared]:::cloudflare
+        nginx_c[Nginx + ModSecurity<br/>Reverse Proxy]:::proxy
         
         subgraph security[Security]
             zitadel[Zitadel]
@@ -89,12 +92,30 @@ uptime -.-> balthasar
 uptime -.-> caspar
 uptime -.-> raspberrypi
 
-%% Cloudflared connections for external access
+%% Cloudflared to Nginx connections
+cloudflared_b --> nginx_b
+cloudflared_c --> nginx_c
+
+%% Nginx reverse proxy connections to services
+nginx_b --> yamisskey
+nginx_b --> neoquesdon
+nginx_b --> element
+nginx_b --> synapse
+nginx_b --> outline
+nginx_b --> vikunja
+nginx_b --> cryptpad
+nginx_b --> lemmy
+
+nginx_c --> nayamisskey
+nginx_c --> nostream
+nginx_c --> grafana
+nginx_c --> ctfd
+nginx_c --> zitadel
+
+%% External connections
 playig --> internet
 cloudflared_b --> internet
 cloudflared_c --> internet
-yamisskey & neoquesdon & element & synapse & outline & vikunja & cryptpad & lemmy--> cloudflared_b
-nayamisskey & nostream & grafana & ctfd & zitadel --> cloudflared_c
 
 %% Apply styles
 class balthasar,caspar homeServer
@@ -103,6 +124,7 @@ class security,social,social_c,matrix,apps,games,CTF service
 class monitoring monitoring
 class security security
 class cloudflared_b,cloudflared_c cloudflare
+class nginx_b,nginx_c proxy
 ```
 ```mermaid
 graph TB
