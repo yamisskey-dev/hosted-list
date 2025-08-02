@@ -11,17 +11,17 @@ classDef common fill:#fef3c7,stroke:#b45309,stroke-width:1px,font-style:italic
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
 classDef proxy fill:#e0e7ff,stroke:#3730a3,stroke-width:2px
+classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
 
 %% Main Infrastructure
 subgraph main_servers[Main Servers]
     direction LR
     
     %% Common services
-    common["共通: Tailscale, Node Exporter, cAdvisor, Fail2ban, DNSCrypt-Proxy, Borg"]:::common
+    common["共通: Tailscale, Node Exporter, cAdvisor, Fail2ban, DNSCrypt-Proxy"]:::common
     
     subgraph balthasar[balthasar]
         direction TB
-        minio[MinIO]
         cloudflared_b[Cloudflared]:::cloudflare
         nginx_b[Nginx + ModSecurity<br/>Reverse Proxy]:::proxy
         
@@ -72,9 +72,11 @@ subgraph main_servers[Main Servers]
     subgraph raspberrypi[raspberrypi - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
         direction TB
         playig[playit.gg]
+        minio[MinIO Storage<br/>2GB RAM, 1.5TB]:::storage
+        borg_backup[Borg Backup Server<br/>1GB RAM, 400GB]:::storage
         
         subgraph games[Games]
-            minecraft[Minecraft Java]
+            minecraft[Minecraft Java<br/>4GB RAM]
         end
     end
     
@@ -84,7 +86,7 @@ end
 
 %% Core connections between main servers
 zitadel --> outline
-minio --> social & outline
+minio --> social & outline & social_c
 element --> synapse
 minecraft --> playig
 prometheus --> grafana
@@ -117,6 +119,10 @@ playig --> internet
 cloudflared_b --> internet
 cloudflared_c --> internet
 
+%% Backup connections
+balthasar -.->|"Borg Backup<br/>Tailscale SSH"| borg_backup
+caspar -.->|"Borg Backup<br/>Tailscale SSH"| borg_backup
+
 %% Apply styles
 class balthasar,caspar homeServer
 class raspberrypi rpi
@@ -125,6 +131,7 @@ class monitoring monitoring
 class security security
 class cloudflared_b,cloudflared_c cloudflare
 class nginx_b,nginx_c proxy
+class minio,borg_backup storage
 ```
 ```mermaid
 graph TB
@@ -207,64 +214,74 @@ classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
 classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
 classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
+classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
 
 %% External storage services
 subgraph external[外部ストレージ]
-    direction LR
-    r2[Cloudflare R2]:::storage
-    filen[Filen\nE2E暗号化]:::storage
+   direction LR
+   r2[Cloudflare R2]:::storage
+   filen[Filen\nE2E暗号化]:::storage
 end
 
 %% Support Infrastructure 
 subgraph internal[内部インフラ]
-    direction TB
-    
-    %% Borg backup server
-    subgraph raspi[raspi]
-        borg_client[Borg Client]:::backup
-        borg_data[(Backup Storage)]:::backup
-    end
-    
-    %% Main servers with backup systems
-    subgraph main_servers[Main Servers]
-        direction LR
-        
-        subgraph balthasar[balthasar]
-            direction TB
-            yamisskey[Misskey]:::service
-            yamisskey_db[(Misskey DB)]:::service
-            minio[MinIO]:::storage
-            borg_b[Borg Server]:::backup
-        end
-        
-        subgraph caspar[caspar]
-            nayamisskey[Misskey N/A]:::service
-            borg_c[Borg Server]:::backup
-        end
-    end
+   direction TB
+   
+   %% Raspberry Pi with MinIO and Backup
+   subgraph raspi[raspberrypi - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
+       direction TB
+       minecraft[Minecraft Java<br/>4GB RAM]:::service
+       minio_main[MinIO Primary<br/>2GB RAM, 1.5TB]:::storage
+       borg_server[Borg Server<br/>1GB RAM, 400GB]:::backup
+       playig[playit.gg]:::service
+   end
+   
+   %% Main servers with backup clients
+   subgraph main_servers[Main Servers]
+       direction LR
+       
+       subgraph balthasar[balthasar]
+           direction TB
+           yamisskey[Misskey]:::service
+           yamisskey_db[(Misskey DB)]:::service
+           borg_client_b[Borg Client]:::backup
+       end
+       
+       subgraph caspar[caspar]
+           direction TB
+           nayamisskey[Misskey N/A]:::service
+           nayamisskey_db[(Misskey N/A DB)]:::service
+           borg_client_c[Borg Client]:::backup
+       end
+   end
 end
 
 %% Internal service connections
 yamisskey --> yamisskey_db
-yamisskey --> minio
+yamisskey --> minio_main
+nayamisskey --> nayamisskey_db
+nayamisskey --> minio_main
 
 %% DB backup connections to external storage
-yamisskey_db -- "DB Backup" --> r2
-yamisskey_db -- "DB Backup" --> filen
+yamisskey_db -- "Weekly DB Backup" --> r2
+yamisskey_db -- "Monthly DB Backup" --> filen
+nayamisskey_db -- "Weekly DB Backup" --> r2
+nayamisskey_db -- "Monthly DB Backup" --> filen
 
-%% MinIO backup connections (Borg only)
-minio -- "Borg Backup" --> borg_b
+%% Borg backup connections (All to raspberrypi)
+borg_client_b -- "Daily Backup<br/>Tailscale SSH" --> borg_server
+borg_client_c -- "Daily Backup<br/>Tailscale SSH" --> borg_server
 
-%% Borg backup connections
-borg_b -- "Tailscale SSH" --> borg_client
-borg_c -- "Tailscale SSH" --> borg_client
-borg_client --> borg_data
+%% MinIO connections
+yamisskey_db -- "Media Files" --> minio_main
+nayamisskey_db -- "Media Files" --> minio_main
 
 %% Apply styles
-class balthasar,caspar,raspi homeServer
-class yamisskey,nayamisskey,yamisskey_db service
-class borg_client,borg_b,borg_c,borg_data backup
-class r2,filen,minio storage
+class balthasar,caspar homeServer
+class raspi rpi
+class yamisskey,nayamisskey,yamisskey_db,nayamisskey_db,minecraft,playig service
+class borg_client_b,borg_client_c,borg_server backup
+class r2,filen,minio_main storage
 ```
 ```mermaid
 graph TB
