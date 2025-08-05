@@ -222,40 +222,43 @@ classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
 classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
 classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
+classDef cloud fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 
 %% External storage services
-subgraph external[外部ストレージ]
-   direction LR
-   r2[Cloudflare R2]:::storage
-   filen[Filen\nE2E暗号化]:::storage
+subgraph external[外部ストレージ - オフサイト]
+   direction TB
+   r2[Cloudflare R2<br/>DBダンプ + Borgバックアップ]:::cloud
+   filen[Filen E2E暗号化<br/>重要データアーカイブ]:::cloud
 end
 
 %% Support Infrastructure 
-subgraph internal[内部インフラ]
+subgraph internal[内部インフラ - オンサイト]
    direction TB
    
    %% Raspberry Pi with MinIO and Backup
    subgraph raspi[raspberrypi - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
        direction TB
        minio_main[MinIO Primary<br/>2GB RAM, 1.5TB]:::storage
-       borg_server[Borg Server<br/>1GB RAM, 400GB]:::backup
+       borg_server[Borg Server<br/>1GB RAM, 400GB<br/>ローカルバックアップ]:::backup
+       db_backup_local[DB Backup Storage<br/>ローカルDBダンプ]:::backup
+       borg_sync[Borg Cloud Sync<br/>週次R2同期]:::backup
    end
    
    %% Main servers with backup clients
-   subgraph main_servers[Main Servers]
+   subgraph main_servers[Main Servers - 本番環境]
        direction LR
        
        subgraph balthasar[balthasar]
            direction TB
            yamisskey[Misskey]:::service
-           yamisskey_db[(Misskey DB)]:::service
+           yamisskey_db[(Misskey DB<br/>本番データ)]:::service
            borg_client_b[Borg Client]:::backup
        end
        
        subgraph caspar[caspar]
            direction TB
            nayamisskey[Misskey N/A]:::service
-           nayamisskey_db[(Misskey N/A DB)]:::service
+           nayamisskey_db[(Misskey N/A DB<br/>本番データ)]:::service
            borg_client_c[Borg Client]:::backup
        end
    end
@@ -267,27 +270,37 @@ yamisskey --> minio_main
 nayamisskey --> nayamisskey_db
 nayamisskey --> minio_main
 
-%% DB backup connections to external storage
-yamisskey_db -- "Daily DB Backup" --> r2
-nayamisskey_db -- "Daily DB Backup" --> r2
+%% 3-2-1 Database Backup Strategy
+%% Copy 1: Daily DB dumps to Raspberry Pi (different media - local SSD)
+yamisskey_db -- "Daily DB Backup<br/>Tailscale SSH" --> db_backup_local
+nayamisskey_db -- "Daily DB Backup<br/>Tailscale SSH" --> db_backup_local
 
-%% DB backup connections to raspberry pi
-yamisskey_db -- "Daily DB Backup<br/>Tailscale SSH" --> borg_server
-nayamisskey_db -- "Daily DB Backup<br/>Tailscale SSH" --> borg_server
+%% Copy 2: Daily DB dumps to R2 (different media - cloud object storage)
+yamisskey_db -- "Daily DB Backup<br/>Cloud Upload" --> r2
+nayamisskey_db -- "Daily DB Backup<br/>Cloud Upload" --> r2
 
-%% Borg backup connections (All to raspberrypi)
-borg_client_b -- "Daily Backup<br/>Tailscale SSH" --> borg_server
-borg_client_c -- "Daily Backup<br/>Tailscale SSH" --> borg_server
+%% 3-2-1 System Backup Strategy
+%% Copy 1: Daily Borg backup to Raspberry Pi (local)
+borg_client_b -- "Daily System Backup<br/>Tailscale SSH" --> borg_server
+borg_client_c -- "Daily System Backup<br/>Tailscale SSH" --> borg_server
 
-%% MinIO connections
-yamisskey_db -- "Media Files" --> minio_main
+%% Copy 2: Weekly Borg sync to R2 (offsite)
+borg_sync -- "Weekly Borg Sync<br/>rclone/restic" --> r2
+
+%% Archive backup to Filen (monthly, encrypted)
+db_backup_local -- "Monthly Archive<br/>重要データのみ" --> filen
+borg_server -- "Monthly Archive<br/>システム重要部分" --> filen
+
+%% MinIO media files backup
+minio_main -- "Media Sync<br/>オプション" --> r2
 
 %% Apply styles
 class balthasar,caspar homeServer
 class raspi rpi
 class yamisskey,nayamisskey,yamisskey_db,nayamisskey_db service
-class borg_client_b,borg_client_c,borg_server backup
-class r2,filen,minio_main storage
+class borg_client_b,borg_client_c,borg_server,db_backup_local,borg_sync backup
+class r2,filen cloud
+class minio_main storage
 ```
 ```mermaid
 graph TB
