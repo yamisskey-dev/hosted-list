@@ -268,6 +268,7 @@ end
 yamisskey --> yamisskey_db
 yamisskey --> minio_main
 nayamisskey --> nayamisskey_db
+nayamisskey --> minio_main
 
 %% 3-2-1 Database Backup Strategy (本番のみ)
 %% Copy 1: Daily DB dumps to Raspberry Pi (different media - local SSD)
