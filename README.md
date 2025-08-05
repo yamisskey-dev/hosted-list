@@ -257,9 +257,9 @@ subgraph internal[内部インフラ - オンサイト]
        
        subgraph caspar[caspar]
            direction TB
-           nayamisskey[Misskey N/A]:::service
-           nayamisskey_db[(Misskey N/A DB<br/>本番データ)]:::service
-           borg_client_c[Borg Client]:::backup
+           nayamisskey[Misskey N/A<br/>テスト環境]:::service
+           nayamisskey_db[(Misskey N/A DB<br/>テストデータ)]:::service
+           borg_client_c[Borg Client<br/>システムのみ]:::backup
        end
    end
 end
@@ -268,21 +268,18 @@ end
 yamisskey --> yamisskey_db
 yamisskey --> minio_main
 nayamisskey --> nayamisskey_db
-nayamisskey --> minio_main
 
-%% 3-2-1 Database Backup Strategy
+%% 3-2-1 Database Backup Strategy (本番のみ)
 %% Copy 1: Daily DB dumps to Raspberry Pi (different media - local SSD)
 yamisskey_db -- "Daily DB Backup<br/>Tailscale SSH" --> db_backup_local
-nayamisskey_db -- "Daily DB Backup<br/>Tailscale SSH" --> db_backup_local
 
 %% Copy 2: Daily DB dumps to R2 (different media - cloud object storage)
 yamisskey_db -- "Daily DB Backup<br/>Cloud Upload" --> r2
-nayamisskey_db -- "Daily DB Backup<br/>Cloud Upload" --> r2
 
-%% 3-2-1 System Backup Strategy
+%% 3-2-1 System Backup Strategy (両方のシステム)
 %% Copy 1: Daily Borg backup to Raspberry Pi (local)
 borg_client_b -- "Daily System Backup<br/>Tailscale SSH" --> borg_server
-borg_client_c -- "Daily System Backup<br/>Tailscale SSH" --> borg_server
+borg_client_c -- "Daily System Backup<br/>Tailscale SSH<br/>テスト環境" --> borg_server
 
 %% Copy 2: Weekly Borg sync to R2 (offsite)
 borg_sync -- "Weekly Borg Sync<br/>rclone/restic" --> r2
