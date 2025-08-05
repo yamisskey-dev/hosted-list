@@ -237,10 +237,8 @@ subgraph internal[内部インフラ]
    %% Raspberry Pi with MinIO and Backup
    subgraph raspi[raspberrypi - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
        direction TB
-       minecraft[Minecraft Java<br/>4GB RAM]:::service
        minio_main[MinIO Primary<br/>2GB RAM, 1.5TB]:::storage
        borg_server[Borg Server<br/>1GB RAM, 400GB]:::backup
-       playig[playit.gg]:::service
    end
    
    %% Main servers with backup clients
@@ -281,12 +279,11 @@ borg_client_c -- "Daily Backup<br/>Tailscale SSH" --> borg_server
 
 %% MinIO connections
 yamisskey_db -- "Media Files" --> minio_main
-nayamisskey_db -- "Media Files" --> minio_main
 
 %% Apply styles
 class balthasar,caspar homeServer
 class raspi rpi
-class yamisskey,nayamisskey,yamisskey_db,nayamisskey_db,minecraft,playig service
+class yamisskey,nayamisskey,yamisskey_db,nayamisskey_db service
 class borg_client_b,borg_client_c,borg_server backup
 class r2,filen,minio_main storage
 ```
