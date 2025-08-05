@@ -268,10 +268,8 @@ nayamisskey --> nayamisskey_db
 nayamisskey --> minio_main
 
 %% DB backup connections to external storage
-yamisskey_db -- "Weekly DB Backup" --> r2
-yamisskey_db -- "Monthly DB Backup" --> filen
-nayamisskey_db -- "Weekly DB Backup" --> r2
-nayamisskey_db -- "Monthly DB Backup" --> filen
+yamisskey_db -- "Daily DB Backup" --> r2
+nayamisskey_db -- "Daily DB Backup" --> r2
 
 %% Borg backup connections (All to raspberrypi)
 borg_client_b -- "Daily Backup<br/>Tailscale SSH" --> borg_server
