@@ -271,6 +271,10 @@ nayamisskey --> minio_main
 yamisskey_db -- "Daily DB Backup" --> r2
 nayamisskey_db -- "Daily DB Backup" --> r2
 
+%% DB backup connections to raspberry pi
+yamisskey_db -- "Daily DB Backup<br/>Tailscale SSH" --> borg_server
+nayamisskey_db -- "Daily DB Backup<br/>Tailscale SSH" --> borg_server
+
 %% Borg backup connections (All to raspberrypi)
 borg_client_b -- "Daily Backup<br/>Tailscale SSH" --> borg_server
 borg_client_c -- "Daily Backup<br/>Tailscale SSH" --> borg_server
