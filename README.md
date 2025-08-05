@@ -71,6 +71,8 @@ subgraph main_servers[Main Servers]
     
     subgraph raspberrypi[raspberrypi - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
         direction TB
+        cloudflared_rpi[Cloudflared]:::cloudflare
+        nginx_rpi[Nginx + ModSecurity<br/>Reverse Proxy]:::proxy
         playig[playit.gg]
         minio[MinIO Storage<br/>2GB RAM, 1.5TB]:::storage
         borg_backup[Borg Backup Server<br/>1GB RAM, 400GB]:::storage
@@ -97,6 +99,10 @@ uptime -.-> raspberrypi
 %% Cloudflared to Nginx connections
 cloudflared_b --> nginx_b
 cloudflared_c --> nginx_c
+cloudflared_rpi --> nginx_rpi
+
+%% NEW: Nginx on RaspberryPi connects to MinIO
+nginx_rpi --> minio
 
 %% Nginx reverse proxy connections to services
 nginx_b --> yamisskey
@@ -118,6 +124,7 @@ nginx_c --> zitadel
 playig --> internet
 cloudflared_b --> internet
 cloudflared_c --> internet
+cloudflared_rpi --> internet
 
 %% Backup connections
 balthasar -.->|"Borg Backup<br/>Tailscale SSH"| borg_backup
@@ -129,8 +136,8 @@ class raspberrypi rpi
 class security,social,social_c,matrix,apps,games,CTF service
 class monitoring monitoring
 class security security
-class cloudflared_b,cloudflared_c cloudflare
-class nginx_b,nginx_c proxy
+class cloudflared_b,cloudflared_c,cloudflared_rpi cloudflare
+class nginx_b,nginx_c,nginx_rpi proxy
 class minio,borg_backup storage
 ```
 ```mermaid
