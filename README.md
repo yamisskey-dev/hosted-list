@@ -216,31 +216,41 @@ graph TB
     classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
     classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
     classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
-    classDef synology fill:#0084ff,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    classDef beelink fill:#ff6b35,stroke:#ffffff,stroke-width:2px,color:#ffffff
     classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
     classDef cloud fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
+    classDef zfs fill:#4c1d95,stroke:#c4b5fd,stroke-width:2px,color:#ffffff
 
     %% External storage
     subgraph external["外部ストレージ"]
-        r2["Cloudflare R2<br/>週次バックアップ"]:::cloud
+        r2["Cloudflare R2<br/>日次DBダンプ<br/>週次システム同期"]:::cloud
         filen["Filen E2E<br/>月次アーカイブ"]:::cloud
     end
 
     %% Internal network
     subgraph internal["ローカルネットワーク"]
         
-        %% Synology NAS
-        subgraph nas["Synology DS423+ NAS"]
-            nas_storage["Storage Manager<br/>SHR-2 + Btrfs"]:::synology
-            nas_backup["Hyper Backup<br/>+ Active Backup"]:::backup
-            nas_docker["Docker Services<br/>Monitoring Only"]:::service
-            shared_folders["Shared Folders<br/>backup_data"]:::storage
+        %% Beelink TrueNAS
+        subgraph beelink_nas["Beelink ME mini - TrueNAS SCALE"]
+            subgraph m2_slots["M.2 スロット構成 (6個)"]
+                slot1["Slot1: 2TB NVMe<br/>TrueNAS OS"]:::storage
+                slot23["Slot2-3: 4TB NVMe×2<br/>ZFS Mirror Pool"]:::zfs
+                slot456["Slot4-6: 拡張用<br/>将来RAID-Z2対応"]:::storage
+            end
+            
+            subgraph truenas_services["TrueNAS Services"]
+                zfs_pool["ZFS Pool (Mirror)<br/>スナップショット<br/>圧縮・重複排除"]:::zfs
+                backup_svc["Backup Services<br/>pg_dump scheduler<br/>rsync server"]:::backup
+                k3s_apps["K3s Apps<br/>Prometheus/Grafana<br/>自動化スクリプト"]:::service
+            end
+            
+            dual_lan["デュアル2.5G LAN<br/>LAN1: メイン<br/>LAN2: 管理用"]:::beelink
         end
         
         %% Raspberry Pi
         subgraph rpi["Raspberry Pi 5"]
-            minio["MinIO<br/>メディアストレージ"]:::storage
-            coordinator["Backup<br/>Coordinator"]:::backup
+            minio["MinIO<br/>メディアストレージ<br/>1.5TB"]:::storage
+            coordinator["Backup<br/>Coordinator<br/>スケジュール管理"]:::backup
         end
         
         %% Main servers
@@ -248,13 +258,13 @@ graph TB
             subgraph balthasar["balthasar 本番"]
                 misskey1["Misskey"]:::service
                 db1["PostgreSQL DB"]:::service
-                backup1["Backup Client"]:::backup
+                backup1["Backup Agent<br/>pg_dump + rsync"]:::backup
             end
             
             subgraph caspar["caspar テスト"]
                 misskey2["Misskey NA"]:::service
                 db2["PostgreSQL DB"]:::service
-                backup2["Backup Client"]:::backup
+                backup2["Backup Agent<br/>システムのみ"]:::backup
             end
         end
     end
@@ -265,34 +275,40 @@ graph TB
     misskey1 --> minio
     misskey2 --> minio
 
-    %% DB Backup flows - 絶対死守
-    db1 -.->|"日次DBダンプ<br/>ローカルネット"| shared_folders
+    %% DB Backup flows - 絶対死守 (4重バックアップ)
+    db1 -.->|"日次DBダンプ<br/>2.5G LAN<br/>高速転送"| backup_svc
     db1 -.->|"日次DBダンプ<br/>直接R2"| r2
     db1 -.->|"日次DBダンプ<br/>直接Filen"| filen
     
+    %% TrueNAS internal flows
+    backup_svc --> zfs_pool
+    slot23 --> zfs_pool
+    
+    %% ZFS snapshots and replication
+    zfs_pool -.->|"ZFS Send/Receive<br/>週次差分同期"| r2
+    zfs_pool -.->|"ZFS スナップショット<br/>時系列バックアップ"| slot23
+    
     %% System backup flows
-    backup1 -.->|"システムバックアップ"| nas_backup
-    backup2 -.->|"システムバックアップ"| nas_backup
-    minio -.->|"メディア同期"| shared_folders
+    backup1 -.->|"システムバックアップ<br/>rsync over SSH"| backup_svc
+    backup2 -.->|"システムバックアップ<br/>テスト環境"| backup_svc
+    minio -.->|"メディア同期<br/>週次"| backup_svc
     
-    %% NAS internal flows
-    shared_folders --> nas_storage
-    nas_storage --> nas_backup
+    %% Coordination and monitoring
+    coordinator -.->|"バックアップ調整<br/>TrueNAS API"| backup_svc
+    k3s_apps -.->|"監視・アラート<br/>SMART監視"| zfs_pool
     
-    %% Coordination
-    coordinator -.->|"スケジュール管理"| nas_backup
-    
-    %% NAS backup flows (システムのみ)
-    nas_backup -.->|"週次同期"| r2
+    %% External sync flows
+    backup_svc -.->|"月次アーカイブ<br/>暗号化"| filen
 
     %% Apply styles
     class balthasar,caspar server
-    class nas synology
+    class beelink_nas beelink
     class rpi rpi
-    class misskey1,misskey2,db1,db2,nas_docker service
-    class nas_backup,coordinator,backup1,backup2 backup
+    class misskey1,misskey2,db1,db2,k3s_apps service
+    class backup_svc,coordinator,backup1,backup2 backup
     class r2,filen cloud
-    class minio,nas_storage,shared_folders storage
+    class minio,slot1,slot456 storage
+    class zfs_pool,slot23 zfs
 ```
 ```mermaid
 graph TB
