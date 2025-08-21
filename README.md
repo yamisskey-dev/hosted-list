@@ -216,7 +216,7 @@ graph TB
     classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
     classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
     classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
-    classDef beelink fill:#ff6b35,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    classDef beelink fill:#ffb88c,stroke:#ffffff,stroke-width:2px,color:#ffffff
     classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
     classDef cloud fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
     classDef zfs fill:#4c1d95,stroke:#c4b5fd,stroke-width:2px,color:#ffffff
