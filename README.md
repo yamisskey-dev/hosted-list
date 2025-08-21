@@ -233,8 +233,8 @@ graph TB
         %% Beelink TrueNAS
         subgraph beelink_nas["Beelink ME mini - TrueNAS SCALE"]
             subgraph m2_slots["M.2 スロット構成 (6個)"]
-                slot1["Slot1: 2TB NVMe<br/>TrueNAS OS"]:::storage
-                slot23["Slot2-3: 4TB NVMe×2<br/>ZFS Mirror Pool"]:::zfs
+                emmc["eMMC 64GB<br/>TrueNAS OS"]:::storage
+                slot23["Slot2-3: 2TB NVMe×2<br/>ZFS Mirror Pool"]:::zfs
                 slot456["Slot4-6: 拡張用<br/>将来RAID-Z2対応"]:::storage
             end
             
@@ -283,6 +283,7 @@ graph TB
     %% TrueNAS internal flows
     backup_svc --> zfs_pool
     slot23 --> zfs_pool
+    emmc --> truenas_services
     
     %% ZFS snapshots and replication
     zfs_pool -.->|"ZFS Send/Receive<br/>週次差分同期"| r2
@@ -307,8 +308,10 @@ graph TB
     class misskey1,misskey2,db1,db2,k3s_apps service
     class backup_svc,coordinator,backup1,backup2 backup
     class r2,filen cloud
-    class minio,slot1,slot456 storage
+    class minio,slot456 storage
     class zfs_pool,slot23 zfs
+    class emmc storage
+
 ```
 ```mermaid
 graph TB
