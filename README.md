@@ -248,20 +248,12 @@ graph TB
                 db1["PostgreSQL DB"]:::service
                 backup1["Backup Agent<br/>pg_dump + rsync"]:::backup
             end
-            
-            subgraph caspar["caspar テスト"]
-                misskey2["Misskey NA"]:::service
-                db2["PostgreSQL DB"]:::service
-                backup2["Backup Agent<br/>システムのみ"]:::backup
-            end
         end
     end
 
     %% Service connections
     misskey1 --> db1
-    misskey2 --> db2
     misskey1 --> minio
-    misskey2 --> minio
 
     %% DB Backup flows - 絶対死守 (4重バックアップ)
     db1 -.->|"日次DBダンプ<br/>2.5G LAN<br/>高速転送"| backup_svc
@@ -279,7 +271,6 @@ graph TB
     
     %% System backup flows
     backup1 -.->|"システムバックアップ<br/>rsync over SSH"| backup_svc
-    backup2 -.->|"システムバックアップ<br/>テスト環境"| backup_svc
     minio -.->|"メディア同期<br/>週次"| backup_svc
     
     %% Coordination and monitoring
@@ -289,13 +280,14 @@ graph TB
     backup_svc -.->|"月次アーカイブ<br/>暗号化"| filen
 
     %% Apply styles
-    class balthasar,caspar server
+    class balthasar server
     class beelink_nas beelink
-    class misskey1,misskey2,db1,db2,k3s_apps service
-    class backup_svc,backup1,backup2 backup
+    class misskey1,db1,k3s_apps service
+    class backup_svc,backup1 backup
     class r2,filen cloud
     class minio,slot456,slot23,zfs_pool storage
     class emmc storage
+
 ```
 ```mermaid
 graph TB
