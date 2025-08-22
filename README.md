@@ -6,12 +6,11 @@ graph TB
     classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
     classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
     classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:1px
-    classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
-    classDef common fill:#fef3c7,stroke:#b45309,stroke-width:1px,font-style:italic
-    classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
+    classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
     classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
     classDef proxy fill:#e0e7ff,stroke:#3730a3,stroke-width:2px
-    classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
+    classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
+    classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 
     %% Main Infrastructure
     subgraph main_servers[Main Servers]
@@ -51,12 +50,6 @@ graph TB
                 zitadel[Zitadel]:::security
             end
             
-            subgraph monitoring_group[Monitoring]
-                grafana[Grafana]:::monitoring
-                prometheus[Prometheus]:::monitoring
-                uptime[Uptime Kuma]:::monitoring
-            end
-            
             subgraph CTF[CTF]
                 ctfd[CTFd]:::service
                 vm[VM]:::service
@@ -72,16 +65,19 @@ graph TB
             end
         end
         
-        subgraph raspberrypi[raspberrypi - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
+        subgraph raspberrypi[raspberrypi - Minecraft専用<br/>NVMe SSD 2TB, 8GB RAM]
             direction TB
-            cloudflared_rpi[Cloudflared]:::cloudflare
-            nginx_rpi[Nginx + ModSecurity<br/>Reverse Proxy]:::proxy
             playig[playit.gg]:::service
-            minio[MinIO Storage<br/>2GB RAM, 1.5TB]:::storage
             
             subgraph games[Games]
                 minecraft[Minecraft Java<br/>4GB RAM]:::service
             end
+        end
+        
+        subgraph truenas[TrueNAS SCALE - K3s]
+            direction TB
+            minio_truenas[MinIO Storage<br/>2TB NVMe]:::storage
+            k3s_monitoring["Prometheus / Grafana / Uptime Kuma"]:::monitoring
         end
         
         internet((Internet)):::cloudflare
@@ -89,22 +85,16 @@ graph TB
 
     %% Core connections
     zitadel --> outline
-    minio --> social & outline & social_c
+    minio_truenas --> social & outline & social_c
     element --> synapse
     minecraft --> playig
-    prometheus --> grafana
-    uptime -.-> balthasar
-    uptime -.-> caspar
-    uptime -.-> raspberrypi
+    k3s_monitoring --> minio_truenas
 
     %% Cloudflared to Nginx connections
     cloudflared_b --> nginx_b
     cloudflared_c --> nginx_c
-    cloudflared_rpi --> nginx_rpi
 
     %% Nginx to services
-    nginx_rpi --> minio
-
     nginx_b --> yamisskey
     nginx_b --> neoquesdon
     nginx_b --> element
@@ -113,10 +103,8 @@ graph TB
     nginx_b --> vikunja
     nginx_b --> cryptpad
     nginx_b --> lemmy
-
     nginx_c --> nayamisskey
     nginx_c --> nostream
-    nginx_c --> grafana
     nginx_c --> ctfd
     nginx_c --> zitadel
     nginx_c --> mcaptcha
@@ -125,17 +113,16 @@ graph TB
     playig --> internet
     cloudflared_b --> internet
     cloudflared_c --> internet
-    cloudflared_rpi --> internet
 
     %% Apply styles
     class balthasar,caspar homeServer
     class raspberrypi rpi
     class social,social_c,matrix,apps,games,CTF,captcha_group service
-    class monitoring_group monitoring
+    class k3s_monitoring monitoring
     class security_group security
-    class cloudflared_b,cloudflared_c,cloudflared_rpi cloudflare
-    class nginx_b,nginx_c,nginx_rpi proxy
-    class minio storage
+    class cloudflared_b,cloudflared_c cloudflare
+    class nginx_b,nginx_c proxy
+    class minio_truenas storage
 
 ```
 ```mermaid
