@@ -211,7 +211,6 @@ graph TB
     classDef backup fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px
     classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
     classDef beelink fill:#ffb88c,stroke:#ffffff,stroke-width:2px,color:#ffffff
-    classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
     classDef cloud fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
     classDef zfs fill:#4c1d95,stroke:#c4b5fd,stroke-width:2px,color:#ffffff
 
@@ -236,15 +235,10 @@ graph TB
                 zfs_pool["ZFS Pool (Mirror)<br/>スナップショット<br/>圧縮・重複排除"]:::zfs
                 backup_svc["Backup Services<br/>pg_dump scheduler<br/>rsync server"]:::backup
                 k3s_apps["K3s Apps<br/>Prometheus/Grafana<br/>自動化スクリプト"]:::service
+                minio["MiniO<br/>メディアストレージ<br/>1.5TB"]:::storage
             end
             
             dual_lan["デュアル2.5G LAN<br/>LAN1: メイン<br/>LAN2: 管理用"]:::beelink
-        end
-        
-        %% Raspberry Pi
-        subgraph rpi["Raspberry Pi 5"]
-            minio["MinIO<br/>メディアストレージ<br/>1.5TB"]:::storage
-            coordinator["Backup<br/>Coordinator<br/>スケジュール管理"]:::backup
         end
         
         %% Main servers
@@ -289,7 +283,6 @@ graph TB
     minio -.->|"メディア同期<br/>週次"| backup_svc
     
     %% Coordination and monitoring
-    coordinator -.->|"バックアップ調整<br/>TrueNAS API"| backup_svc
     k3s_apps -.->|"監視・アラート<br/>SMART監視"| zfs_pool
     
     %% External sync flows
@@ -298,14 +291,11 @@ graph TB
     %% Apply styles
     class balthasar,caspar server
     class beelink_nas beelink
-    class rpi rpi
     class misskey1,misskey2,db1,db2,k3s_apps service
-    class backup_svc,coordinator,backup1,backup2 backup
+    class backup_svc,backup1,backup2 backup
     class r2,filen cloud
-    class minio,slot456 storage
-    class zfs_pool,slot23 zfs
+    class minio,slot456,slot23,zfs_pool storage
     class emmc storage
-
 ```
 ```mermaid
 graph TB
