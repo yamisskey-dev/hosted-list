@@ -17,7 +17,6 @@ graph TB
     subgraph main_servers[Main Servers]
         direction LR
         
-        %% Common services
         common["共通: Tailscale, Node Exporter, cAdvisor, Fail2ban, DNSCrypt-Proxy"]:::common
         
         subgraph balthasar[balthasar]
@@ -67,6 +66,10 @@ graph TB
                 nayamisskey[Misskey N/A]:::service
                 nostream[Nostr]:::service
             end
+
+            subgraph captcha_group[Captcha]
+                mcaptcha[mCaptcha]:::service
+            end
         end
         
         subgraph raspberrypi[raspberrypi - Raspberry Pi 5<br/>NVMe SSD 2TB, 8GB RAM]
@@ -81,11 +84,10 @@ graph TB
             end
         end
         
-        %% External entity
         internet((Internet)):::cloudflare
     end
 
-    %% Core connections between main servers
+    %% Core connections
     zitadel --> outline
     minio --> social & outline & social_c
     element --> synapse
@@ -100,10 +102,9 @@ graph TB
     cloudflared_c --> nginx_c
     cloudflared_rpi --> nginx_rpi
 
-    %% Nginx on RaspberryPi connects to MinIO
+    %% Nginx to services
     nginx_rpi --> minio
 
-    %% Nginx reverse proxy connections to services
     nginx_b --> yamisskey
     nginx_b --> neoquesdon
     nginx_b --> element
@@ -118,6 +119,7 @@ graph TB
     nginx_c --> grafana
     nginx_c --> ctfd
     nginx_c --> zitadel
+    nginx_c --> mcaptcha
 
     %% External connections
     playig --> internet
@@ -128,12 +130,13 @@ graph TB
     %% Apply styles
     class balthasar,caspar homeServer
     class raspberrypi rpi
-    class social,social_c,matrix,apps,games,CTF service
+    class social,social_c,matrix,apps,games,CTF,captcha_group service
     class monitoring_group monitoring
     class security_group security
     class cloudflared_b,cloudflared_c,cloudflared_rpi cloudflare
     class nginx_b,nginx_c,nginx_rpi proxy
     class minio storage
+
 ```
 ```mermaid
 graph TB
