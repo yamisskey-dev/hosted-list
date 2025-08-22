@@ -11,6 +11,7 @@ graph TB
     classDef proxy fill:#e0e7ff,stroke:#3730a3,stroke-width:2px
     classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
     classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
+    classDef automation fill:#cffafe,stroke:#06b6d4,stroke-width:1.5px
 
     %% Main Infrastructure
     subgraph main_servers[Main Servers]
@@ -78,6 +79,7 @@ graph TB
             direction TB
             minio_truenas[MinIO Storage<br/>2TB NVMe]:::storage
             k3s_monitoring["Prometheus / Grafana / Uptime Kuma"]:::monitoring
+            ansible["Ansible<br/>管理・自動化"]:::automation
         end
         
         internet((Internet)):::cloudflare
@@ -89,6 +91,8 @@ graph TB
     element --> synapse
     minecraft --> playig
     k3s_monitoring --> minio_truenas
+    ansible --> k3s_monitoring
+    ansible --> minio_truenas
 
     %% Cloudflared to Nginx connections
     cloudflared_b --> nginx_b
@@ -123,7 +127,7 @@ graph TB
     class cloudflared_b,cloudflared_c cloudflare
     class nginx_b,nginx_c proxy
     class minio_truenas storage
-
+    class ansible automation
 ```
 ```mermaid
 graph TB
