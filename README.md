@@ -114,7 +114,6 @@ graph TB
     class cloudflared_b,cloudflared_c cloudflare
     class nginx_b,nginx_c proxy
 ```
-```
 
 ## Proxmox Virtualization Platform & Security Environment
 
