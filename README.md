@@ -327,25 +327,29 @@ subgraph support[Support Infrastructure]
     internet((Internet)):::internet
 end
 
-%% Misskey -> proxies
-yamisskey --> summaryproxy & mediaproxy & squid
-nayamisskey --> summaryproxy & mediaproxy & squid
-
-%% Misskey -> Cloudflared
+%% Misskeyからはcloudflared経由で外に出る
 yamisskey --> cloudflared_b
 nayamisskey --> cloudflared_c
 
-%% Proxies connections
-summaryproxy --> cloudflared_p
-mediaproxy --> cloudflared_p
-squid --> warp
-
-%% WARP出口
-warp --> cloudflare_network
-cloudflare_network --> internet
+%% MisskeyからSquidへは直接
+yamisskey --> squid
+nayamisskey --> squid
 
 %% Cloudflared -> Cloudflare Network
 cloudflared_b --> cloudflare_network
 cloudflared_c --> cloudflare_network
 cloudflared_p --> cloudflare_network
+
+%% Cloudflare Network -> 公開されたサービス
+cloudflare_network --> summaryproxy
+cloudflare_network --> mediaproxy
+
+%% 各ProxyからCloudflaredへ
+summaryproxy --> cloudflared_p
+mediaproxy --> cloudflared_p
+
+%% SquidからはWARP経由で外に出る
+squid --> warp
+warp --> cloudflare_network
+cloudflare_network --> internet
 ```
