@@ -1,6 +1,6 @@
 # hosted-list
 
-## メインインフラストラクチャ概要
+## Main Infrastructure Overview
 
 ```mermaid
 graph TB
@@ -132,7 +132,7 @@ graph TB
     class ansible automation
 ```
 
-## Proxmox仮想化基盤とセキュリティ環境
+## Proxmox Virtualization Platform & Security Environment
 
 ```mermaid
 graph TB
@@ -209,7 +209,7 @@ class proxmox homeServer
 class pfsense_vm,tpot_vm,malcolm_vm homeServer
 ```
 
-## ストレージ・バックアップ戦略
+## Storage & Backup Strategy
 
 ```mermaid
 graph TB
@@ -298,7 +298,7 @@ graph TB
 
 ```
 
-## ネットワークトラフィックフローとプロキシ構成
+## Network Traffic Flow & Proxy Configuration
 
 ```mermaid
 graph TB
