@@ -79,6 +79,8 @@ graph TB
     zitadel --> outline
     element --> synapse
     minecraft --> playig
+    yamisskey --> mcaptcha
+    nayamisskey --> mcaptcha
 
     %% Cloudflared to Nginx connections
     cloudflared_b --> nginx_b
@@ -111,6 +113,7 @@ graph TB
     class security_group security
     class cloudflared_b,cloudflared_c cloudflare
     class nginx_b,nginx_c proxy
+```
 ```
 
 ## Proxmox Virtualization Platform & Security Environment
