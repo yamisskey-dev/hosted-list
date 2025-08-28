@@ -296,6 +296,12 @@ classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
+classDef user fill:#fef9c3,stroke:#ca8a04,stroke-width:1.5px
+classDef federation fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.5px
+
+%% External actors
+enduser([エンドユーザー<br/>Webブラウザ]):::user
+other_misskey([他のMisskeyサーバー]):::federation
 
 subgraph support[Support Infrastructure]
     direction TB
@@ -305,51 +311,36 @@ subgraph support[Support Infrastructure]
         subgraph proxy[linode-proxy]
             summaryproxy[Summary proxy]:::service
             mediaproxy[Media proxy]:::service
-            squid[Squid]:::security
+            squid[Squid<br/>プロキシ]:::security
             warp[Cloudflare WARP]:::cloudflare
             cloudflared_p[Cloudflared]:::cloudflare
         end
     end
     
     subgraph main_servers[Main Servers]
-        direction LR
-        subgraph balthasar[balthasar]
+        direction TB
+        subgraph balthasar_caspar[balthasar/caspar]
             yamisskey[Misskey]:::service
-            cloudflared_b[Cloudflared]:::cloudflare
-        end
-        subgraph caspar[caspar]
-            nayamisskey[Misskey N/A]:::service
-            cloudflared_c[Cloudflared]:::cloudflare
+            cloudflared_bc[Cloudflared]:::cloudflare
         end
     end
-    
-    cloudflare_network[Cloudflare Network]:::cloudflare
-    internet((Internet)):::internet
 end
 
-%% Misskeyからはcloudflared経由で外に出る
-yamisskey --> cloudflared_b
-nayamisskey --> cloudflared_c
+%% エンドユーザーのアクセス経路（青線）
+enduser -.->|"①Web UI アクセス"| cloudflared_bc
+cloudflared_bc -.-> yamisskey
 
-%% MisskeyからSquidへは直接
-yamisskey --> squid
-nayamisskey --> squid
+%% 他のMisskeyサーバーからの連合リクエスト（紫線）
+other_misskey ==>|"②連合リクエスト"| cloudflared_bc
+cloudflared_bc ==> yamisskey
 
-%% Cloudflared -> Cloudflare Network
-cloudflared_b --> cloudflare_network
-cloudflared_c --> cloudflare_network
-cloudflared_p --> cloudflare_network
+%% Misskeyサーバーからプロキシへの内部リクエスト（オレンジ線）
+yamisskey -.->|"③プロキシ利用"| cloudflared_p
+cloudflared_p -.-> summaryproxy
+cloudflared_p -.-> mediaproxy
 
-%% Cloudflare Network -> 公開されたサービス
-cloudflare_network --> summaryproxy
-cloudflare_network --> mediaproxy
-
-%% 各ProxyからCloudflaredへ
-summaryproxy --> cloudflared_p
-mediaproxy --> cloudflared_p
-
-%% SquidからはWARP経由で外に出る
+%% Misskeyサーバーからの外向き通信（赤線）
+yamisskey -->|"④他サーバーへ<br/>リクエスト"| squid
 squid --> warp
-warp --> cloudflare_network
-cloudflare_network --> internet
+warp --> other_misskey
 ```
