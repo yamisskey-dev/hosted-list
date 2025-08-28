@@ -147,7 +147,6 @@ subgraph proxmox["GMKtec NucBox K10 - Proxmox VE<br/>Core i9-13900HK, 64GB DDR5,
    subgraph vms["Virtual Machines"]
        subgraph pfsense_vm["pfSense VM - 4c/8GB/32GB"]
            pfsense["pfSense 2.7+"]:::security
-           suricata["Suricata IDS/IPS"]:::security
            haproxy["HAProxy"]:::service
            openvpn["OpenVPN"]:::security
        end
@@ -185,7 +184,7 @@ local_lvm --> malcolm_vm
 %% Service connections
 tpot --> kibana_tpot
 malcolm --> elasticsearch
-suricata --> malcolm
+suricata_malcolm --> malcolm
 
 %% Apply styles
 class proxmox homeServer
