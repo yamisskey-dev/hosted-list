@@ -328,11 +328,12 @@ end
 
 %% エンドユーザーのアクセス経路（青線）
 enduser -.->|"①Web UI アクセス"| cloudflared_bc
-cloudflared_bc -.-> yamisskey
 
 %% 他のMisskeyサーバーからの連合リクエスト（紫線）
 other_misskey ==>|"②連合リクエスト"| cloudflared_bc
-cloudflared_bc ==> yamisskey
+
+%% CloudflaredからMisskeyへの共通経路
+cloudflared_bc --> yamisskey
 
 %% Misskeyサーバーからプロキシへの内部リクエスト（オレンジ線）
 yamisskey -.->|"③プロキシ利用"| cloudflared_p
