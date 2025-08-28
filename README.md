@@ -192,6 +192,86 @@ class proxmox homeServer
 class pfsense_vm,tpot_vm,malcolm_vm homeServer
 ```
 
+## Integrated Monitoring ＆ Automation System
+
+```mermaid
+graph TB
+    %% Style definitions
+    classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:2px
+    classDef automation fill:#cffafe,stroke:#06b6d4,stroke-width:2px
+    classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
+    classDef common fill:#f1f5f9,stroke:#475569,stroke-width:1px
+    classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px
+
+    %% Central Hub
+    subgraph truenas["TrueNAS SCALE - 監視・自動化ハブ"]
+        direction TB
+        prometheus["Prometheus<br/>メトリクス収集"]:::monitoring
+        blackbox_exporter["Blackbox Exporter<br/>外部サービス監視"]:::monitoring
+        grafana["Grafana<br/>可視化ダッシュボード"]:::monitoring
+        uptime_kuma["Uptime Kuma<br/>サービス死活監視"]:::monitoring
+        alert_manager["AlertManager<br/>通知管理"]:::alert
+        ansible["Ansible<br/>構成管理・自動化"]:::automation
+    end
+
+    %% External Notifications
+    subgraph notifications["外部通知"]
+        direction TB
+        slack["Slack<br/>チーム通知"]:::alert
+        discord["Discord<br/>個人通知"]:::alert
+    end
+
+    %% Monitored Servers
+    subgraph servers["監視対象サーバー"]
+        direction LR
+        
+        subgraph balthasar["balthasar (例)"]
+            direction TB
+            cloudflared_b["Cloudflared<br/>トンネル状態"]:::common
+            node_exporter_b["Node Exporter"]:::common
+            cadvisor_b["cAdvisor"]:::common
+            fail2ban_b["Fail2ban"]:::common
+        end
+        
+        subgraph proxmox["Proxmox環境"]
+            direction TB
+            tpot["T-Pot<br/>ハニーポット監視"]:::monitoring
+            malcolm["Malcolm<br/>ネットワーク分析"]:::monitoring
+            pfsense["pfSense<br/>ファイアウォール統計"]:::monitoring
+        end
+    end
+
+    %% Data Flow
+    cloudflared_b --> prometheus
+    node_exporter_b --> prometheus
+    cadvisor_b --> prometheus
+    fail2ban_b --> prometheus
+    
+    tpot --> prometheus
+    malcolm --> prometheus
+    pfsense --> prometheus
+    
+    %% Blackbox Exporter monitoring external services
+    blackbox_exporter --> prometheus
+
+    %% Monitoring Integration
+    prometheus --> grafana
+    prometheus --> alert_manager
+    uptime_kuma --> alert_manager
+
+    %% Notification Flow
+    alert_manager -->|"重要アラート<br/>サービス停止"| slack
+    alert_manager -->|"個人通知<br/>リアルタイム"| discord
+
+    %% Automation Flow
+    alert_manager --> ansible
+    ansible --> servers
+
+    %% Apply styles
+    class truenas homeServer
+    class balthasar,caspar,rpi homeServer
+```
+
 ## Storage & Backup Strategy
 
 ```mermaid
