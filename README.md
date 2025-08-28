@@ -221,11 +221,12 @@ graph TB
     classDef beelink fill:#ffb88c,stroke:#ffffff,stroke-width:2px,color:#ffffff
     classDef cloud fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
     classDef zfs fill:#4c1d95,stroke:#c4b5fd,stroke-width:2px,color:#ffffff
+    classDef encrypted fill:#fee2e2,stroke:#991b1b,stroke-width:2px
 
     %% External storage
     subgraph external["外部ストレージ"]
-        r2["Cloudflare R2<br/>日次DBダンプ<br/>週次システム同期"]:::cloud
-        filen["Filen E2E<br/>月次アーカイブ"]:::cloud
+        r2["Cloudflare R2<br/>日次DBダンプ<br/>週次システム同期<br/>(メディア除外)"]:::cloud
+        filen["Filen E2E<br/>日次メディア差分バックアップ<br/>rclone暗号化<br/>月次システムアーカイブ"]:::encrypted
     end
 
     %% Internal network
@@ -241,9 +242,9 @@ graph TB
             
             subgraph truenas_services["TrueNAS Services"]
                 zfs_pool["ZFS Pool (Mirror)<br/>スナップショット<br/>圧縮・重複排除"]:::zfs
-                backup_svc["Backup Services<br/>pg_dump scheduler<br/>rsync server"]:::backup
-                k3s_apps["K3s Apps<br/>Prometheus/Grafana<br/>自動化スクリプト"]:::service
-                minio["MiniO<br/>メディアストレージ<br/>1.5TB"]:::storage
+                backup_svc["Backup Services<br/>pg_dump scheduler<br/>rsync server<br/>rclone Filen sync"]:::backup
+                k3s_apps["K3s Apps<br/>Prometheus/Grafana<br/>バックアップ監視<br/>自動化スクリプト"]:::service
+                minio["MinIO<br/>メディアストレージ<br/>1.5TB<br/>プライマリ"]:::storage
             end
             
             dual_lan["デュアル2.5G LAN<br/>LAN1: メイン<br/>LAN2: 管理用"]:::beelink
@@ -259,14 +260,17 @@ graph TB
         end
     end
 
-    %% Service connections
+    %% Service connections - シンプルな構成維持
     misskey1 --> db1
     misskey1 --> minio
 
-    %% DB Backup flows - 絶対死守 (4重バックアップ)
+    %% MinIO → Filen 日次差分バックアップ (新規メイン)
+    minio ==>|"日次差分バックアップ<br/>rclone sync<br/>暗号化転送<br/>5-15分/日"| filen
+    backup_svc ==>|"MinIO→Filen<br/>自動スケジューリング<br/>監視・ログ"| filen
+
+    %% DB Backup flows - 既存維持
     db1 -.->|"日次DBダンプ<br/>2.5G LAN<br/>高速転送"| backup_svc
     db1 -.->|"日次DBダンプ<br/>直接R2"| r2
-    db1 -.->|"日次DBダンプ<br/>直接Filen"| filen
     
     %% TrueNAS internal flows
     backup_svc --> zfs_pool
@@ -279,23 +283,26 @@ graph TB
     
     %% System backup flows
     backup1 -.->|"システムバックアップ<br/>rsync over SSH"| backup_svc
-    minio -.->|"メディア同期<br/>週次"| backup_svc
+    minio -.->|"ローカル統計<br/>同期状況監視"| backup_svc
     
     %% Coordination and monitoring
-    k3s_apps -.->|"監視・アラート<br/>SMART監視"| zfs_pool
+    k3s_apps -.->|"監視・アラート<br/>SMART監視<br/>Filen容量監視"| zfs_pool
+    k3s_apps -.->|"バックアップ成功率<br/>転送統計<br/>暗号化検証"| backup_svc
     
-    %% External sync flows
-    backup_svc -.->|"月次アーカイブ<br/>暗号化"| filen
+    %% External sync flows  
+    backup_svc -.->|"システム月次アーカイブ<br/>設定・ログ"| filen
 
     %% Apply styles
     class balthasar server
     class beelink_nas beelink
     class misskey1,db1,k3s_apps service
     class backup_svc,backup1 backup
-    class r2,filen cloud
+    class r2 cloud
+    class filen encrypted
     class minio,slot456,slot23,zfs_pool storage
     class emmc storage
-
+```
+```
 ```
 
 ## Network Traffic Flow & Proxy Configuration
