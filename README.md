@@ -7,19 +7,14 @@ graph TB
     %% Style definitions
     classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
     classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
-    classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:1px
-    classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
     classDef rpi fill:#fde68a,stroke:#d97706,stroke-width:2px
     classDef proxy fill:#e0e7ff,stroke:#3730a3,stroke-width:2px
     classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
     classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
-    classDef automation fill:#cffafe,stroke:#06b6d4,stroke-width:1.5px
 
     %% Main Infrastructure
     subgraph main_servers[Main Servers]
         direction LR
-        
-        common["共通: Tailscale, Node Exporter, cAdvisor, Fail2ban, DNSCrypt-Proxy"]:::common
         
         subgraph balthasar[balthasar]
             direction TB
@@ -77,24 +72,13 @@ graph TB
             end
         end
         
-        subgraph truenas[TrueNAS SCALE - K3s]
-            direction TB
-            minio_truenas[MinIO Storage<br/>2TB NVMe]:::storage
-            k3s_monitoring["Prometheus / Grafana / Uptime Kuma"]:::monitoring
-            ansible["Ansible<br/>管理・自動化"]:::automation
-        end
-        
         internet((Internet)):::cloudflare
     end
 
     %% Core connections
     zitadel --> outline
-    minio_truenas --> social & outline & social_c
     element --> synapse
     minecraft --> playig
-    k3s_monitoring --> minio_truenas
-    ansible --> k3s_monitoring
-    ansible --> minio_truenas
 
     %% Cloudflared to Nginx connections
     cloudflared_b --> nginx_b
@@ -124,12 +108,9 @@ graph TB
     class balthasar,caspar homeServer
     class raspberrypi rpi
     class social,social_c,matrix,apps,games,CTF,captcha_group service
-    class k3s_monitoring monitoring
     class security_group security
     class cloudflared_b,cloudflared_c cloudflare
     class nginx_b,nginx_c proxy
-    class minio_truenas storage
-    class ansible automation
 ```
 
 ## Proxmox Virtualization Platform & Security Environment
