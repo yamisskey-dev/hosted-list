@@ -1,5 +1,7 @@
 # hosted-list
 
+## メインインフラストラクチャ概要
+
 ```mermaid
 graph TB
     %% Style definitions
@@ -129,6 +131,9 @@ graph TB
     class minio_truenas storage
     class ansible automation
 ```
+
+## Proxmox仮想化基盤とセキュリティ環境
+
 ```mermaid
 graph TB
 %% Style definitions
@@ -203,6 +208,9 @@ suricata --> malcolm
 class proxmox homeServer
 class pfsense_vm,tpot_vm,malcolm_vm homeServer
 ```
+
+## ストレージ・バックアップ戦略
+
 ```mermaid
 graph TB
     %% Style definitions
@@ -289,6 +297,9 @@ graph TB
     class emmc storage
 
 ```
+
+## ネットワークトラフィックフローとプロキシ構成
+
 ```mermaid
 graph TB
 classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
