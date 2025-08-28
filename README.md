@@ -298,34 +298,27 @@ classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
 
-%% Support Infrastructure with connections to main servers
+%% Support Infrastructure
 subgraph support[Support Infrastructure]
     direction TB
     
     subgraph linode[Linode Servers]
         direction TB
-        
-        subgraph vpn[linode-vpn]
-            algo[Algo VPN]:::security
-        end
-        
         subgraph proxy[linode-proxy]
             summaryproxy[Summary proxy]:::service
             mediaproxy[Media proxy]:::service
             squid[Squid]:::security
-            cloudflared_proxy[Cloudflared]:::cloudflare
+            warp[Cloudflare WARP]:::cloudflare
         end
     end
     
-    %% Main server references with their social services
+    %% Main Servers
     subgraph main_servers[Main Servers]
         direction LR
-        
         subgraph balthasar[balthasar]
             yamisskey[Misskey]:::service
             cloudflared_b[Cloudflared]:::cloudflare
         end
-        
         subgraph caspar[caspar]
             nayamisskey[Misskey N/A]:::service
             cloudflared_c[Cloudflared]:::cloudflare
@@ -337,27 +330,22 @@ subgraph support[Support Infrastructure]
     internet((Internet)):::internet
 end
 
-%% Connections to proxies
-yamisskey --> summaryproxy & mediaproxy
-nayamisskey --> summaryproxy & mediaproxy
+%% Misskey -> proxies
+yamisskey --> summaryproxy & mediaproxy & squid
+nayamisskey --> summaryproxy & mediaproxy & squid
 
-%% Direct connections from Misskey to Cloudflared
+%% Misskey -> Cloudflared
 yamisskey --> cloudflared_b
 nayamisskey --> cloudflared_c
 
-%% Misskey connections to VPN and proxy
-yamisskey --> algo & squid
-nayamisskey --> algo & squid
+%% Proxies -> WARP
+summaryproxy & mediaproxy & squid --> warp
 
-%% Direct VPN and proxy connections to internet
-algo --> internet
-squid --> internet
-
-%% Cloudflare connections
-cloudflared_b & cloudflared_c --> cloudflare_network
-cloudflared_proxy --> cloudflare_network
+%% WARP出口
+warp --> cloudflare_network
 cloudflare_network --> internet
 
-%% Proxy service connections to Cloudflared
-summaryproxy & mediaproxy --> cloudflared_proxy
+%% Cloudflared -> Cloudflare Network (直接)
+cloudflared_b --> cloudflare_network
+cloudflared_c --> cloudflare_network
 ```
