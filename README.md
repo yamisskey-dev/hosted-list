@@ -201,9 +201,10 @@ graph TB
     classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
     classDef common fill:#f1f5f9,stroke:#475569,stroke-width:1px
     classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
 
-    %% Central Hub
-    subgraph truenas["TrueNAS SCALE - 監視・自動化ハブ"]
+    %% Caspar - Primary Monitoring Hub
+    subgraph caspar["caspar - プライマリ監視ハブ"]
         direction TB
         prometheus["Prometheus<br/>メトリクス収集"]:::monitoring
         blackbox_exporter["Blackbox Exporter<br/>外部サービス監視"]:::monitoring
@@ -212,6 +213,8 @@ graph TB
         alert_manager["AlertManager<br/>通知管理"]:::alert
         ansible["Ansible<br/>構成管理・自動化"]:::automation
     end
+
+
 
     %% External Notifications
     subgraph notifications["外部通知"]
@@ -222,11 +225,10 @@ graph TB
 
     %% Monitored Servers
     subgraph servers["監視対象サーバー"]
-        direction LR
+        direction TB
         
-        subgraph balthasar["balthasar (例)"]
+        subgraph balthasar["balthasar - 本番サーバー"]
             direction TB
-            cloudflared_b["Cloudflared<br/>トンネル状態"]:::common
             node_exporter_b["Node Exporter"]:::common
             cadvisor_b["cAdvisor"]:::common
             fail2ban_b["Fail2ban"]:::common
@@ -240,14 +242,20 @@ graph TB
             malcolm["Malcolm<br/>ネットワーク分析"]:::monitoring
             pfsense["pfSense<br/>ファイアウォール統計"]:::monitoring
         end
+        
+        subgraph truenas["TrueNAS"]
+            direction TB
+            node_exporter_t["Node Exporter<br/>システム監視"]:::common
+            backup_script["Backup Script<br/>結果通知"]:::automation
+        end
     end
 
-    %% Monitoring Data Flow
-    cloudflared_b --> prometheus
+    %% Primary Monitoring Data Flow (caspar)
     node_exporter_b --> prometheus
     cadvisor_b --> prometheus
     fail2ban_b --> prometheus
     misskey_app --> prometheus
+    node_exporter_t --> prometheus
     
     tpot --> prometheus
     malcolm --> prometheus
@@ -255,10 +263,16 @@ graph TB
     
     blackbox_exporter --> prometheus
 
+    %% Cross-monitoring for redundancy
+    uptime_kuma -->|"サービス死活監視"| alert_manager
+
     %% Monitoring Integration
     prometheus --> grafana
     prometheus --> alert_manager
     uptime_kuma --> alert_manager
+
+    %% External monitoring
+    prometheus -->|"定期監視"| uptime_kuma
 
     %% AlertManager Notifications
     alert_manager -->|"重要アラート<br/>サービス停止"| slack
@@ -267,14 +281,15 @@ graph TB
     %% Application Notifications
     misskey_app -->|"Webhook通知<br/>新規登録・管理イベント"| discord
     db_backup_script -->|"バックアップ結果<br/>成功・失敗・統計"| discord
+    backup_script -->|"TrueNASバックアップ結果<br/>成功・失敗・統計"| discord
 
     %% Automation Flow
     alert_manager --> ansible
     ansible --> servers
 
     %% Apply styles
-    class truenas homeServer
-    class balthasar,proxmox homeServer
+    class caspar homeServer
+    class balthasar,proxmox,truenas homeServer
 ```
 
 ## Storage & Backup Strategy
