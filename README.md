@@ -291,14 +291,12 @@ graph TB
 ```
 ```mermaid
 graph TB
-%% Style definitions
 classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
 classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
 
-%% Support Infrastructure
 subgraph support[Support Infrastructure]
     direction TB
     
@@ -309,10 +307,10 @@ subgraph support[Support Infrastructure]
             mediaproxy[Media proxy]:::service
             squid[Squid]:::security
             warp[Cloudflare WARP]:::cloudflare
+            cloudflared_p[Cloudflared]:::cloudflare
         end
     end
     
-    %% Main Servers
     subgraph main_servers[Main Servers]
         direction LR
         subgraph balthasar[balthasar]
@@ -325,7 +323,6 @@ subgraph support[Support Infrastructure]
         end
     end
     
-    %% External networks
     cloudflare_network[Cloudflare Network]:::cloudflare
     internet((Internet)):::internet
 end
@@ -338,14 +335,17 @@ nayamisskey --> summaryproxy & mediaproxy & squid
 yamisskey --> cloudflared_b
 nayamisskey --> cloudflared_c
 
-%% Proxies -> WARP
-summaryproxy & mediaproxy & squid --> warp
+%% Proxies connections
+summaryproxy --> cloudflared_p
+mediaproxy --> cloudflared_p
+squid --> warp
 
 %% WARP出口
 warp --> cloudflare_network
 cloudflare_network --> internet
 
-%% Cloudflared -> Cloudflare Network (直接)
+%% Cloudflared -> Cloudflare Network
 cloudflared_b --> cloudflare_network
 cloudflared_c --> cloudflare_network
+cloudflared_p --> cloudflare_network
 ```
