@@ -73,7 +73,7 @@ graph TB
             playig[playit.gg]:::service
             
             subgraph games[Games]
-                minecraft[Minecraft Java<br/>4GB RAM]:::service
+                minecraft[Minecraft Java<br/>6GB RAM]:::service
             end
         end
         
