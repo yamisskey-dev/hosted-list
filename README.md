@@ -218,7 +218,7 @@ graph TB
     subgraph notifications["外部通知"]
         direction TB
         slack["Slack<br/>チーム通知"]:::alert
-        discord["Discord<br/>個人通知"]:::alert
+        discord["Discord<br/>個人通知<br/>Webhook受信"]:::alert
     end
 
     %% Monitored Servers
@@ -231,6 +231,8 @@ graph TB
             node_exporter_b["Node Exporter"]:::common
             cadvisor_b["cAdvisor"]:::common
             fail2ban_b["Fail2ban"]:::common
+            misskey_app["Misskey<br/>・Webhook通知"]:::common
+            db_backup_script["DBバックアップスクリプト<br/>・結果通知"]:::automation
         end
         
         subgraph proxmox["Proxmox環境"]
@@ -241,17 +243,17 @@ graph TB
         end
     end
 
-    %% Data Flow
+    %% Monitoring Data Flow
     cloudflared_b --> prometheus
     node_exporter_b --> prometheus
     cadvisor_b --> prometheus
     fail2ban_b --> prometheus
+    misskey_app --> prometheus
     
     tpot --> prometheus
     malcolm --> prometheus
     pfsense --> prometheus
     
-    %% Blackbox Exporter monitoring external services
     blackbox_exporter --> prometheus
 
     %% Monitoring Integration
@@ -259,9 +261,13 @@ graph TB
     prometheus --> alert_manager
     uptime_kuma --> alert_manager
 
-    %% Notification Flow
+    %% AlertManager Notifications
     alert_manager -->|"重要アラート<br/>サービス停止"| slack
-    alert_manager -->|"個人通知<br/>リアルタイム"| discord
+    alert_manager -->|"システム監視<br/>リアルタイム"| discord
+
+    %% Application Notifications
+    misskey_app -->|"Webhook通知<br/>新規登録・管理イベント"| discord
+    db_backup_script -->|"バックアップ結果<br/>成功・失敗・統計"| discord
 
     %% Automation Flow
     alert_manager --> ansible
@@ -269,7 +275,7 @@ graph TB
 
     %% Apply styles
     class truenas homeServer
-    class balthasar,caspar,rpi homeServer
+    class balthasar,proxmox homeServer
 ```
 
 ## Storage & Backup Strategy
