@@ -1,6 +1,6 @@
 # hosted-list
 
-## Main Infrastructure Overview
+## Service Architecture & Deployment Overview
 
 ```mermaid
 graph TB
