@@ -385,7 +385,6 @@ graph TB
     class minio,slot456,slot23,zfs_pool storage
     class emmc storage
 ```
-```
 
 ## Network Traffic Flow & Proxy Configuration
 
