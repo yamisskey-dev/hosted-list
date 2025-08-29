@@ -316,18 +316,18 @@ graph TB
     subgraph internal["ローカルネットワーク"]
         
         %% Beelink TrueNAS
-        subgraph beelink_nas["Beelink ME mini - TrueNAS SCALE"]
+        subgraph beelink_nas["Beelink ME mini - TrueNAS SCALE 24.10"]
             subgraph m2_slots["M.2 スロット構成 (6個)"]
                 emmc["eMMC 64GB<br/>TrueNAS OS"]:::storage
                 slot23["Slot2-3: 2TB NVMe×2<br/>ZFS Mirror Pool"]:::zfs
                 slot456["Slot4-6: 拡張用<br/>将来RAID-Z2対応"]:::storage
             end
             
-            subgraph truenas_services["TrueNAS Services"]
+            subgraph truenas_services["TrueNAS Services (Docker統一)"]
                 zfs_pool["ZFS Pool (Mirror)<br/>スナップショット<br/>圧縮・重複排除"]:::zfs
                 backup_svc["Backup Services<br/>pg_dump scheduler<br/>rsync server<br/>rclone Filen sync"]:::backup
-                k3s_apps["K3s Apps<br/>Prometheus/Grafana<br/>バックアップ監視<br/>自動化スクリプト"]:::service
-                minio["MinIO<br/>メディアストレージ<br/>1.5TB<br/>プライマリ"]:::storage
+                minio["MinIO (Docker)<br/>メディアストレージ<br/>1.5TB<br/>プライマリ"]:::storage
+                node_exporter["Node Exporter (Docker)<br/>監視エージェント"]:::service
             end
             
             dual_lan["デュアル2.5G LAN<br/>LAN1: メイン<br/>LAN2: 管理用"]:::beelink
@@ -368,9 +368,9 @@ graph TB
     backup1 -.->|"システムバックアップ<br/>rsync over SSH"| backup_svc
     minio -.->|"ローカル統計<br/>同期状況監視"| backup_svc
     
-    %% Coordination and monitoring
-    k3s_apps -.->|"監視・アラート<br/>SMART監視<br/>Filen容量監視"| zfs_pool
-    k3s_apps -.->|"バックアップ成功率<br/>転送統計<br/>暗号化検証"| backup_svc
+    %% Monitoring flows
+    node_exporter -.->|"システム監視<br/>メトリクス送信"| zfs_pool
+    backup_svc -.->|"バックアップ成功率<br/>転送統計<br/>暗号化検証"| node_exporter
     
     %% External sync flows  
     backup_svc -.->|"システム月次アーカイブ<br/>設定・ログ"| filen
@@ -378,12 +378,13 @@ graph TB
     %% Apply styles
     class balthasar server
     class beelink_nas beelink
-    class misskey1,db1,k3s_apps service
+    class misskey1,db1,node_exporter service
     class backup_svc,backup1 backup
     class r2 cloud
     class filen encrypted
     class minio,slot456,slot23,zfs_pool storage
     class emmc storage
+```
 ```
 
 ## Network Traffic Flow & Proxy Configuration
