@@ -450,6 +450,9 @@ classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
 classDef user fill:#fef9c3,stroke:#ca8a04,stroke-width:1.5px
 classDef federation fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.5px
+%% 強調（除外ターゲット）
+classDef exclude fill:#fff1f2,stroke:#ef4444,stroke-width:2px,stroke-dasharray: 6 3,color:#ef4444
+classDef excludeHome fill:#fef7f7,stroke:#dc2626,stroke-width:3px,stroke-dasharray: 8 4,color:#dc2626
 
 %% External actors
 enduser([エンドユーザー<br/>Webブラウザ]):::user
@@ -475,6 +478,12 @@ subgraph support[Support Infrastructure]
             yamisskey[Misskey]:::service
             cloudflared_bc[Cloudflared]:::cloudflare
         end
+        
+        subgraph truenas[🏠 TrueNAS Scale joseph]
+            direction TB
+            minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
+            cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
+        end
     end
 end
 
@@ -496,4 +505,11 @@ cloudflared_p -.-> mediaproxy
 yamisskey -->|"④他サーバーへ<br/>リクエスト"| squid
 squid --> warp
 warp --> other_misskey
+
+%% MinIOへの直接アクセス（除外対象）
+yamisskey -.->|"⑤ファイルアップロード/ダウンロード<br/>drive.yami.ski<br/>（WARP除外・NO_PROXY対象）"| cloudflared_home
+cloudflared_home -.-> minio
+
+%% エンドユーザーからのメディアアクセス
+enduser -.->|"メディアファイル<br/>アクセス"| cloudflared_home
 ```
