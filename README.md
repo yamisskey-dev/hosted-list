@@ -450,7 +450,9 @@ classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
 classDef user fill:#fef9c3,stroke:#ca8a04,stroke-width:1.5px
 classDef federation fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.5px
-classDef direct fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+%% 強調（除外ターゲット）
+classDef exclude fill:#fff1f2,stroke:#ef4444,stroke-width:2px,stroke-dasharray: 6 3,color:#ef4444
+classDef excludeHome fill:#fef7f7,stroke:#dc2626,stroke-width:3px,stroke-dasharray: 8 4,color:#dc2626
 
 %% External actors
 enduser([エンドユーザー<br/>Webブラウザ]):::user
@@ -479,8 +481,8 @@ subgraph support[Support Infrastructure]
         
         subgraph truenas[🏠 TrueNAS Scale（自宅サーバー）]
             direction TB
-            minio[MinIO<br/>オブジェクトストレージ]:::direct
-            cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::direct
+            minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
+            cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
         end
     end
 end
@@ -488,7 +490,7 @@ end
 %% エンドユーザーのアクセス経路（青線）
 enduser -.->|"①Web UI アクセス"| cloudflared_bc
 
-%% 外部サーバーからの連合リクエスト（紫線）
+%% 他のMisskeyサーバーからの連合リクエスト（紫線）
 external_servers ==>|"②連合リクエスト"| cloudflared_bc
 
 %% CloudflaredからMisskeyへの共通経路
@@ -504,9 +506,12 @@ yamisskey -->|"④外部への全リクエスト<br/>（連合・画像・メデ
 squid --> warp
 warp -->|"外部サーバーへ"| external_servers
 
-%% プロキシバイパス対象への直接アクセス（緑線）
-yamisskey -.->|"⑤プロキシバイパス<br/>（DeepL・reCAPTCHA・MinIO等）"| cloudflared_home
-yamisskey -.->|"プロキシバイパス<br/>（その他API）"| external_servers
+%% プロキシバイパス対象への直接アクセス
+yamisskey -.->|"プロキシバイパス<br/>（DeepL・reCAPTCHA等）"| external_servers
+
+%% MinIOへのアクセス（Squid経由だがWARP除外）
+yamisskey -.->|"⑤ファイルアップロード/ダウンロード<br/>drive.yami.ski"| squid
+squid -.->|"WARP除外対象<br/>直接接続"| cloudflared_home
 cloudflared_home -.-> minio
 
 %% エンドユーザーからのメディアアクセス
