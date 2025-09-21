@@ -488,17 +488,17 @@ subgraph support[Support Infrastructure]
     end
 end
 
-%% エンドユーザーのアクセス経路
-enduser -.->|"①Web UI アクセス"| cloudflared_bc
-cloudflared_bc --> yamisskey
+%% エンドユーザーのアクセス経路（太線）
+enduser ==>|"①Web UI アクセス"| cloudflared_bc
+cloudflared_bc ==> yamisskey
 
-%% 外部サーバーからの連合リクエスト
-external_servers ==>|"②連合リクエスト"| cloudflared_bc
+%% 外部サーバーからの連合リクエスト（通常線）
+external_servers -->|"②連合リクエスト"| cloudflared_bc
 
-%% Misskeyサーバーからプロキシへの内部リクエスト
-yamisskey -.->|"③プロキシ利用"| cloudflared_p
+%% Misskeyサーバーからプロキシへの内部リクエスト（MediaProxyのみ太線）
+yamisskey ==>|"③プロキシ利用"| cloudflared_p
+cloudflared_p ==> mediaproxy
 cloudflared_p -.-> summaryproxy
-cloudflared_p -.-> mediaproxy
 
 %% === Misskeyのみ Tailscale経由でSquid使用 ===
 yamisskey -->|"④🔗 Tailscale経由<br/>Squidアクセス許可"| squid
@@ -506,13 +506,14 @@ squid --> warp
 
 %% WARPからの分岐
 warp -->|"外部サーバーへ"| external_servers
-squid -.->|"drive.yami.ski<br/>ファイルアクセス<br/>WARP迂回"| cloudflared_home
+squid ==>|"メディアプロキシへ<br/>アクセス"| cloudflared_p
 cloudflared_home -.-> nginx_minio
 nginx_minio -.-> minio
 
-%% === MediaProxy・SummaryProxy のルート修正（インターネットノード撤去） ===
-mediaproxy -->|"⑤画像取得/変換要求<br/>TrueNASのCloudflaredへ"| cloudflared_home
-summaryproxy -->|"⑥URL情報取得結果を<br/>直接Misskeyへ返却"| yamisskey
+%% === MediaProxy・SummaryProxy のルート修正（MediaProxyのみ太線） ===
+mediaproxy ==>|"⑤画像取得/変換要求<br/>TrueNASのCloudflaredへ"| cloudflared_home
+mediaproxy ==>|"画像処理結果返却<br/>Misskeyへ"| yamisskey
+summaryproxy -.->|"⑥URL情報取得結果を<br/>直接Misskeyへ返却"| yamisskey
 
 %% プロキシバイパス対象（特定APIサービス）
 yamisskey -.->|"プロキシバイパス<br/>API直接アクセス"| bypass_services
