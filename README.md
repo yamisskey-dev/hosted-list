@@ -477,7 +477,7 @@ subgraph support[Support Infrastructure]
         end
     end
     
-    subgraph truenas[TrueNAS Scale jpseph]
+    subgraph truenas[TrueNAS Scale joseph]
         direction TB
         minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
         cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
