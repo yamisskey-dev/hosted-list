@@ -471,18 +471,21 @@ subgraph support[Support Infrastructure]
             warp[Cloudflare WARP<br/>drive.yami.ski除外]:::cloudflare
             cloudflared_p[Cloudflared]:::cloudflare
         end
-        
+    end
+    
+    subgraph homeservers[🏠 自宅サーバー群]
+        direction TB
         subgraph balthasar_caspar[balthasar/caspar]
             yamisskey[Misskey<br/>🔗 Tailscale接続]:::tailscale
             cloudflared_bc[Cloudflared]:::cloudflare
         end
-    end
-    
-    subgraph truenas[TrueNAS Scale joseph]
-        direction TB
-        nginx_minio[Nginx Reverse Proxy<br/>直接アクセス禁止]:::security
-        minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
-        cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
+        
+        subgraph truenas[TrueNAS Scale joseph]
+            direction TB
+            nginx_minio[Nginx Reverse Proxy<br/>直接アクセス禁止]:::security
+            minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
+            cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
+        end
     end
 end
 
