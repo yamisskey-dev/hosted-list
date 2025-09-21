@@ -481,7 +481,7 @@ subgraph support[Support Infrastructure]
         
         subgraph truenas[TrueNAS Scale joseph]
             direction TB
-            nginx_minio[Nginx Reverse Proxy<br/>直接アクセス禁止]:::security
+            nginx_minio[Nginx Reverse Proxy<br/>Referer/User-Agent チェック<br/>直接アクセス禁止]:::security
             minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
             cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
         end
@@ -509,6 +509,7 @@ warp -->|"外部サーバーへ"| external_servers
 squid ==>|"メディアプロキシへ<br/>アクセス"| cloudflared_p
 cloudflared_home -.-> nginx_minio
 nginx_minio -.-> minio
+cloudflared_home ==>|"ファイル処理結果<br/>Misskeyへ返却"| yamisskey
 
 %% === MediaProxy・SummaryProxy のルート修正（MediaProxyのみ太線） ===
 mediaproxy ==>|"⑤画像取得/変換要求<br/>TrueNASのCloudflaredへ"| cloudflared_home
