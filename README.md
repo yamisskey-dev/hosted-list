@@ -447,7 +447,6 @@ classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
 classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
 classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
-classDef internet fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px
 classDef user fill:#fef9c3,stroke:#ca8a04,stroke-width:1.5px
 classDef federation fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.5px
 classDef excludeHome fill:#fef7f7,stroke:#dc2626,stroke-width:3px,stroke-dasharray: 8 4,color:#dc2626
@@ -457,7 +456,6 @@ classDef tailscale fill:#fef3c7,stroke:#d97706,stroke-width:2px
 %% External actors
 enduser([エンドユーザー<br/>Webブラウザ]):::user
 external_servers([外部サーバー<br/>（他Misskey・画像・API等）]):::federation
-internet([インターネット]):::internet
 
 subgraph support[Support Infrastructure]
     direction TB
@@ -482,7 +480,7 @@ subgraph support[Support Infrastructure]
         
         subgraph truenas[TrueNAS Scale joseph]
             direction TB
-            nginx_minio[Nginx Reverse Proxy<br/>直接アクセス禁止]:::security
+            nginx_minio[Nginx Reverse Proxy<br/直接アクセス禁止]:::security
             minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
             cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
         end
@@ -511,18 +509,12 @@ warp -.->|"drive.yami.ski<br/>WARP除外対象<br/>直接接続"| cloudflared_ho
 cloudflared_home -.-> nginx_minio
 nginx_minio -.-> minio
 
-%% === MediaProxy・SummaryProxyは独自ルート（Tailscale未接続） ===
-mediaproxy -->|"⑤画像処理用アクセス<br/>独自ルート"| internet
-summaryproxy -->|"⑥URL情報取得<br/>独自ルート"| internet
-
-internet --> external_servers
-internet -.->|"直接接続"| cloudflared_home
+%% === MediaProxy・SummaryProxy のルート修正（インターネットノード撤去） ===
+mediaproxy -->|"⑤画像取得/変換要求<br/>TrueNASのCloudflaredへ"| cloudflared_home
+summaryproxy -->|"⑥URL情報取得結果を<br/>直接Misskeyへ返却"| yamisskey
 
 %% プロキシバイパス対象（DeepL等）
-yamisskey -.->|"プロキシバイパス<br/>（DeepL・reCAPTCHA等）"| external_servers
-
-%% サマリープロキシからMisskeyへの情報返却
-summaryproxy -.->|"⑦URL情報返却"| yamisskey
+yamisskey -.->|"プロキシバイパス<br/>(DeepL・reCAPTCHA等)"| external_servers
 
 %% 直接URLアクセス（ブロック）
 enduser -.->|"drive.yami.ski<br/>直接URL アクセス<br/>❌ Nginx でブロック"| cloudflared_home
