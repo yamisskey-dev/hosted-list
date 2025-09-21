@@ -456,6 +456,7 @@ classDef tailscale fill:#fef3c7,stroke:#d97706,stroke-width:2px
 %% External actors
 enduser([エンドユーザー<br/>Webブラウザ]):::user
 external_servers([外部サーバー<br/>（他Misskey・画像・API等）]):::federation
+bypass_services([DeepL API<br/>reCAPTCHA<br/>hCaptcha<br/>Cloudflare Challenges]):::direct
 
 subgraph support[Support Infrastructure]
     direction TB
@@ -480,7 +481,7 @@ subgraph support[Support Infrastructure]
         
         subgraph truenas[TrueNAS Scale joseph]
             direction TB
-            nginx_minio[Nginx Reverse Proxy<br/直接アクセス禁止]:::security
+            nginx_minio[Nginx Reverse Proxy<br/>直接アクセス禁止]:::security
             minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
             cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
         end
@@ -513,8 +514,9 @@ nginx_minio -.-> minio
 mediaproxy -->|"⑤画像取得/変換要求<br/>TrueNASのCloudflaredへ"| cloudflared_home
 summaryproxy -->|"⑥URL情報取得結果を<br/>直接Misskeyへ返却"| yamisskey
 
-%% プロキシバイパス対象（DeepL等）
-yamisskey -.->|"プロキシバイパス<br/>(DeepL・reCAPTCHA等)"| external_servers
+%% プロキシバイパス対象（特定APIサービス）
+yamisskey -.->|"プロキシバイパス<br/>API直接アクセス"| bypass_services
+bypass_services -.->|"API結果返却<br/>（翻訳・CAPTCHA等）"| yamisskey
 
 %% 直接URLアクセス（ブロック）
 enduser -.->|"drive.yami.ski<br/>直接URL アクセス<br/>❌ Nginx でブロック"| cloudflared_home
