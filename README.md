@@ -513,7 +513,6 @@ cloudflared_home ==>|"ファイル処理結果<br/>Misskeyへ返却"| yamisskey
 
 %% === MediaProxy・SummaryProxy のルート修正（MediaProxyのみ太線） ===
 mediaproxy ==>|"⑤画像取得/変換要求<br/>TrueNASのCloudflaredへ"| cloudflared_home
-mediaproxy ==>|"画像処理結果返却<br/>Misskeyへ"| yamisskey
 summaryproxy -.->|"⑥URL情報取得結果を<br/>直接Misskeyへ返却"| yamisskey
 
 %% プロキシバイパス対象（特定APIサービス）
