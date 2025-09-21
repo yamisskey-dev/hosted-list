@@ -495,18 +495,18 @@ cloudflared_bc ==> yamisskey
 %% 外部サーバーからの連合リクエスト（通常線）
 external_servers -->|"②連合リクエスト"| cloudflared_bc
 
-%% Misskeyサーバーからプロキシへの内部リクエスト（MediaProxyのみ太線）
-yamisskey ==>|"③プロキシ利用"| cloudflared_p
-cloudflared_p ==> mediaproxy
-cloudflared_p -.-> summaryproxy
+%% Misskeyサーバーからの全外部通信はSquid経由
+%% （MediaProxy/SummaryProxy含む）
 
 %% === Misskeyのみ Tailscale経由でSquid使用 ===
-yamisskey -->|"④🔗 Tailscale経由<br/>Squidアクセス許可"| squid
+yamisskey ==>|"④🔗 Tailscale経由<br/>全外部通信<br/>（MediaProxy・SummaryProxy・外部サーバー）"| squid
 squid --> warp
 
 %% WARPからの分岐
 warp -->|"外部サーバーへ"| external_servers
-squid ==>|"メディアプロキシへ<br/>アクセス"| cloudflared_p
+squid ==>|"MediaProxy/SummaryProxy<br/>アクセス"| cloudflared_p
+cloudflared_p ==> mediaproxy
+cloudflared_p -.-> summaryproxy
 cloudflared_home -.-> nginx_minio
 nginx_minio -.-> minio
 cloudflared_home ==>|"ファイル処理結果<br/>Misskeyへ返却"| yamisskey
