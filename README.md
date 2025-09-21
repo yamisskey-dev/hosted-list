@@ -512,8 +512,8 @@ cloudflared_home -.-> nginx_minio
 nginx_minio -.-> minio
 
 %% === MediaProxy・SummaryProxyは独自ルート（Tailscale未接続） ===
-mediaproxy -->|"⑤画像処理用アクセス<br/>（Tailscale未接続）<br/>独自ルート"| internet
-summaryproxy -->|"⑥URL情報取得<br/>（Tailscale未接続）<br/>独自ルート"| internet
+mediaproxy -->|"⑤画像処理用アクセス<br/>独自ルート"| internet
+summaryproxy -->|"⑥URL情報取得<br/>独自ルート"| internet
 
 internet --> external_servers
 internet -.->|"直接接続"| cloudflared_home
