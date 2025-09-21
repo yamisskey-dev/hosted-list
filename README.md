@@ -486,13 +486,14 @@ subgraph support[Support Infrastructure]
     subgraph homeservers[🏠 自宅サーバー群]
         direction TB
         subgraph balthasar_caspar[balthasar/caspar]
+            nginx_misskey[Nginx + ModSecurity<br/>WAF・Reverse Proxy]:::security
             yamisskey[Misskey<br/>🔗 Tailscale接続]:::tailscale
             cloudflared_bc[Cloudflared]:::cloudflare
         end
         
         subgraph truenas[TrueNAS Scale joseph]
             direction TB
-            nginx_minio[Nginx Reverse Proxy<br/>直接アクセス禁止]:::security
+            nginx_minio[Nginx Reverse Proxy<br/>Referer/User-Agent チェック<br/>直接アクセス禁止]:::security
             minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
             cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
         end
@@ -501,7 +502,8 @@ end
 
 %% エンドユーザーのアクセス経路（太線）
 enduser ==>|"①Web UI アクセス"| cloudflared_bc
-cloudflared_bc ==> yamisskey
+cloudflared_bc ==> nginx_misskey
+nginx_misskey ==> yamisskey
 
 %% 外部サーバーからの連合リクエスト（通常線）
 external_servers -->|"②連合リクエスト"| cloudflared_bc
@@ -522,11 +524,11 @@ cloudflared_p -.-> summaryproxy
 squid ==>|"MediaProxy<br/>アクセス"| cloudflared_p
 cloudflared_home -.-> nginx_minio
 nginx_minio -.-> minio
-cloudflared_home ==>|"ファイル処理結果<br/>Misskeyへ返却"| yamisskey
+cloudflared_home ==>|"ファイル処理結果<br/>返却"| cloudflared_bc
 
 %% === MediaProxy・SummaryProxy のルート修正（MediaProxyのみ太線） ===
 mediaproxy ==>|"⑤画像取得/変換要求<br/>TrueNASのCloudflaredへ"| cloudflared_home
-summaryproxy -.->|"⑥URL情報取得結果を<br/>直接Misskeyへ返却"| yamisskey
+summaryproxy -.->|"⑥URL情報取得結果<br/>返却"| cloudflared_bc
 
 %% プロキシバイパス対象（特定APIサービス）
 yamisskey -.->|"プロキシバイパス<br/>API直接アクセス"| bypass_services
