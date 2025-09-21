@@ -481,7 +481,7 @@ subgraph support[Support Infrastructure]
         
         subgraph truenas[TrueNAS Scale joseph]
             direction TB
-            nginx_minio[Nginx Reverse Proxy<br/>Referer/User-Agent チェック<br/>直接アクセス禁止]:::security
+            nginx_minio[Nginx Reverse Proxy<br/>直接アクセス禁止]:::security
             minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
             cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
         end
