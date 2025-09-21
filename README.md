@@ -519,6 +519,6 @@ yamisskey -.->|"プロキシバイパス<br/>（DeepL・reCAPTCHA等）"| extern
 %% サマリープロキシからMisskeyへの情報返却
 summaryproxy -.->|"⑦URL情報返却"| yamisskey
 
-%% エンドユーザーからのメディアアクセス
-enduser -.->|"メディアファイル<br/>直接アクセス"| cloudflared_home
+%% 直接URLアクセス（稀なケース）
+enduser -.->|"drive.yami.ski<br/>直接URL アクセス<br/>（稀なケース）"| cloudflared_home
 ```
