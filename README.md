@@ -504,9 +504,11 @@ squid --> warp
 
 %% WARPからの分岐
 warp -->|"外部サーバーへ"| external_servers
-squid ==>|"MediaProxy/SummaryProxy<br/>アクセス"| cloudflared_p
+warp ==>|"SummaryProxy<br/>アクセス"| cloudflared_p
+warp -->|"外部URL情報取得"| summaryproxy
 cloudflared_p ==> mediaproxy
 cloudflared_p -.-> summaryproxy
+squid ==>|"MediaProxy<br/>アクセス"| cloudflared_p
 cloudflared_home -.-> nginx_minio
 nginx_minio -.-> minio
 cloudflared_home ==>|"ファイル処理結果<br/>Misskeyへ返却"| yamisskey
