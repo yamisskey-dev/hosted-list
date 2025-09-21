@@ -119,112 +119,87 @@ graph TB
 
 ```mermaid
 graph TB
-%% Style definitions
-classDef terraform fill:#623ce4,stroke:#ffffff,stroke-width:2px,color:#ffffff
-classDef provider fill:#ff6b35,stroke:#ffffff,stroke-width:2px,color:#ffffff
-classDef resource fill:#f8fafc,stroke:#64748b,stroke-width:1px
-classDef module fill:#e2e8f0,stroke:#334155,stroke-width:2px
-classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:1px
-classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
-classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
-classDef network fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
-
-%% Terraform Configuration
-subgraph terraform_config["Terraform Configuration"]
-    main_tf["main.tf<br/>Main Configuration"]:::terraform
-    variables_tf["variables.tf<br/>Input Variables"]:::terraform
-    outputs_tf["outputs.tf<br/>Output Values"]:::terraform
-    terraform_tfvars["terraform.tfvars<br/>Variable Values"]:::terraform
-end
-
-%% Terraform Provider
-subgraph providers["Terraform Providers"]
-    proxmox_provider["Proxmox Provider<br/>telmate/proxmox"]:::provider
-    local_provider["Local Provider<br/>File Operations"]:::provider
-end
-
-%% Physical Infrastructure (Managed by Terraform)
-subgraph physical["GMKtec NucBox K10 - Proxmox VE<br/>Managed via Terraform"]
-    %% Storage Resources
-    subgraph storage_resources["Storage Resources"]
-        storage_pool["proxmox_storage<br/>Storage Pool Config"]:::storage
-        iso_storage["ISO Downloads<br/>via proxmox_vm_qemu"]:::storage
+    %% Style definitions
+    classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
+    classDef service fill:#f8fafc,stroke:#64748b,stroke-width:1px
+    classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:1px
+    classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
+    classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
+    classDef network fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    
+    %% Proxmox Host
+    subgraph proxmox["GMKtec NucBox K10 - Proxmox VE<br/>Core i9-13900HK, 64GB DDR5, 1TB NVMe"]
+       %% Storage Configuration
+       subgraph storage["Storage Pools"]
+           local["local<br/>ISO, Templates, Backups"]:::storage
+           local_lvm["local-lvm<br/>VM Disks"]:::storage
+       end
+       
+       %% Network Bridges
+       subgraph networks["Virtual Networks"]
+           vmbr0["vmbr0 - External<br/>WAN Interface"]:::network
+           vmbr1["vmbr1 - Internal LAN<br/>10.0.0.0/24"]:::network
+           vmbr2["vmbr2 - DMZ<br/>192.168.100.0/24"]:::network
+           vmbr3["vmbr3 - Management<br/>172.16.0.0/24"]:::network
+       end
+       
+       %% Virtual Machines
+       subgraph vms["Virtual Machines (Terraform Managed)"]
+           subgraph pfsense_vm["pfSense VM - 4c/8GB/32GB"]
+               pfsense["pfSense 2.7+"]:::security
+               haproxy["HAProxy"]:::service
+               openvpn["OpenVPN"]:::security
+           end
+           
+           subgraph tpot_vm["T-Pot VM - 8c/24GB/200GB"]
+               tpot["T-Pot 24.04+"]:::security
+               cowrie["Cowrie SSH Honeypot"]:::security
+               dionaea["Dionaea Multi-protocol"]:::security
+               elasticpot["ElasticPot"]:::security
+               kibana_tpot["Kibana Dashboard"]:::monitoring
+           end
+           
+           subgraph malcolm_vm["Malcolm VM - 12c/32GB/500GB"]
+               malcolm["Malcolm"]:::monitoring
+               elasticsearch["Elasticsearch"]:::monitoring
+               logstash["Logstash"]:::monitoring
+               zeek["Zeek Network Analysis"]:::monitoring
+               suricata_malcolm["Suricata IDS"]:::security
+               kibana_malcolm["Kibana Analytics"]:::monitoring
+           end
+       end
     end
     
-    %% Network Resources
-    subgraph network_resources["Network Bridge Resources"]
-        vmbr0_resource["Linux Bridge vmbr0<br/>WAN Interface"]:::network
-        vmbr1_resource["Linux Bridge vmbr1<br/>10.0.0.0/24"]:::network
-        vmbr2_resource["Linux Bridge vmbr2<br/>192.168.100.0/24"]:::network
-        vmbr3_resource["Linux Bridge vmbr3<br/>172.16.0.0/24"]:::network
+    %% Terraform Configuration
+    subgraph terraform["Terraform Configuration"]
+        main_tf["main.tf"]:::service
+        variables_tf["variables.tf"]:::service
+        modules["modules/"]:::service
+        state["terraform.tfstate"]:::service
     end
     
-    %% VM Resources
-    subgraph vm_resources["Virtual Machine Resources"]
-        subgraph pfsense_resource["proxmox_vm_qemu.pfsense"]
-            pfsense_config["VM Configuration<br/>4c/8GB/32GB"]:::resource
-            pfsense_cloud_init["Cloud-init Config"]:::resource
-            pfsense_network["Network Interfaces"]:::resource
-        end
-        
-        subgraph tpot_resource["proxmox_vm_qemu.tpot"]
-            tpot_config["VM Configuration<br/>8c/24GB/200GB"]:::resource
-            tpot_cloud_init["Cloud-init Config"]:::resource
-            tpot_network["Network Interfaces"]:::resource
-        end
-        
-        subgraph malcolm_resource["proxmox_vm_qemu.malcolm"]
-            malcolm_config["VM Configuration<br/>12c/32GB/500GB"]:::resource
-            malcolm_cloud_init["Cloud-init Config"]:::resource
-            malcolm_network["Network Interfaces"]:::resource
-        end
-    end
-end
-
-%% Terraform Modules
-subgraph modules["Terraform Modules"]
-    vm_module["VM Module<br/>./modules/vm"]:::module
-    network_module["Network Module<br/>./modules/network"]:::module
-    monitoring_module["Monitoring Module<br/>./modules/monitoring"]:::module
-end
-
-%% Configuration Files
-subgraph config_files["Configuration Templates"]
-    pfsense_template["pfSense Config<br/>templates/pfsense.xml"]:::resource
-    tpot_template["T-Pot Config<br/>templates/tpot.yml"]:::resource
-    malcolm_template["Malcolm Config<br/>templates/malcolm.yml"]:::resource
-    cloud_init_template["Cloud-init Templates<br/>templates/user-data.yml"]:::resource
-end
-
-%% State Management
-subgraph state["State Management"]
-    state_file["terraform.tfstate<br/>Infrastructure State"]:::terraform
-    state_lock["State Locking<br/>(Optional: Remote Backend)"]:::terraform
-end
-
-%% Connections
-terraform_config --> proxmox_provider
-terraform_config --> modules
-modules --> vm_resources
-modules --> network_resources
-modules --> storage_resources
-
-config_files --> vm_resources
-state --> terraform_config
-
-%% VM Dependencies
-vmbr0_resource -.-> pfsense_resource
-vmbr2_resource -.-> tpot_resource
-vmbr2_resource -.-> malcolm_resource
-vmbr3_resource -.-> pfsense_resource
-
-storage_pool -.-> pfsense_resource
-storage_pool -.-> tpot_resource
-storage_pool -.-> malcolm_resource
-
-%% Apply styles
-class terraform_config,state terraform
-class vm_module,network_module,monitoring_module module
+    %% Network connections
+    vmbr0 --> pfsense_vm
+    vmbr2 --> tpot_vm
+    vmbr2 --> malcolm_vm
+    vmbr3 --> pfsense_vm
+    
+    %% Storage connections
+    local_lvm --> pfsense_vm
+    local_lvm --> tpot_vm
+    local_lvm --> malcolm_vm
+    
+    %% Service connections
+    tpot --> kibana_tpot
+    malcolm --> elasticsearch
+    suricata_malcolm --> malcolm
+    
+    %% Terraform management
+    terraform --> vms
+    
+    %% Apply styles
+    class proxmox homeServer
+    class pfsense_vm,tpot_vm,malcolm_vm homeServer
 ```
 
 ## Integrated Monitoring & Automation System with IaC
