@@ -452,6 +452,7 @@ classDef user fill:#fef9c3,stroke:#ca8a04,stroke-width:1.5px
 classDef federation fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.5px
 classDef excludeHome fill:#fef7f7,stroke:#dc2626,stroke-width:3px,stroke-dasharray: 8 4,color:#dc2626
 classDef direct fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+classDef tailscale fill:#fef3c7,stroke:#d97706,stroke-width:2px
 
 %% External actors
 enduser([エンドユーザー<br/>Webブラウザ]):::user
@@ -466,13 +467,13 @@ subgraph support[Support Infrastructure]
         subgraph proxy[linode-proxy]
             summaryproxy[Summary proxy<br/>独自IP]:::direct
             mediaproxy[Media proxy<br/>独自IP]:::direct
-            squid[Squid プロキシ<br/>Misskeyのみ許可]:::security
+            squid[Squid プロキシ<br/>🔗 Tailscale ACL制限]:::tailscale
             warp[Cloudflare WARP<br/>drive.yami.ski除外]:::cloudflare
             cloudflared_p[Cloudflared]:::cloudflare
         end
         
         subgraph balthasar_caspar[balthasar/caspar]
-            yamisskey[Misskey<br/>100.82.87.10<br/>100.72.71.32]:::service
+            yamisskey[Misskey<br/>🔗 Tailscale接続]:::tailscale
             cloudflared_bc[Cloudflared]:::cloudflare
         end
     end
@@ -496,8 +497,8 @@ yamisskey -.->|"③プロキシ利用"| cloudflared_p
 cloudflared_p -.-> summaryproxy
 cloudflared_p -.-> mediaproxy
 
-%% === Misskeyのみ Squid経由（ACL制限あり） ===
-yamisskey -->|"④Misskeyからの外部通信<br/>Squid ACL許可"| squid
+%% === Misskeyのみ Tailscale経由でSquid使用 ===
+yamisskey -->|"④🔗 Tailscale経由<br/>Squidアクセス許可"| squid
 squid --> warp
 
 %% WARPからの分岐
@@ -505,9 +506,9 @@ warp -->|"外部サーバーへ"| external_servers
 warp -.->|"drive.yami.ski<br/>WARP除外対象<br/>直接接続"| cloudflared_home
 cloudflared_home -.-> minio
 
-%% === MediaProxy・SummaryProxyは独自ルート ===
-mediaproxy -->|"⑤画像処理用アクセス<br/>Squid ACL拒否<br/>独自ルート"| internet
-summaryproxy -->|"⑥URL情報取得<br/>Squid ACL拒否<br/>独自ルート"| internet
+%% === MediaProxy・SummaryProxyは独自ルート（Tailscale未接続） ===
+mediaproxy -->|"⑤画像処理用アクセス<br/>（Tailscale未接続）<br/>独自ルート"| internet
+summaryproxy -->|"⑥URL情報取得<br/>（Tailscale未接続）<br/>独自ルート"| internet
 
 internet --> external_servers
 internet -.->|"直接接続"| cloudflared_home
