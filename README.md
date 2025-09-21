@@ -506,7 +506,7 @@ squid --> warp
 
 %% WARPからの分岐
 warp -->|"外部サーバーへ"| external_servers
-warp -.->|"drive.yami.ski<br/>WARP除外対象<br/>直接接続"| cloudflared_home
+squid -.->|"drive.yami.ski<br/>ファイルアクセス<br/>WARP迂回"| cloudflared_home
 cloudflared_home -.-> nginx_minio
 nginx_minio -.-> minio
 
