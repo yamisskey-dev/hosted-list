@@ -480,6 +480,7 @@ subgraph support[Support Infrastructure]
     
     subgraph truenas[TrueNAS Scale joseph]
         direction TB
+        nginx_minio[Nginx Reverse Proxy<br/>直接アクセス禁止]:::security
         minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
         cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
     end
@@ -504,7 +505,8 @@ squid --> warp
 %% WARPからの分岐
 warp -->|"外部サーバーへ"| external_servers
 warp -.->|"drive.yami.ski<br/>WARP除外対象<br/>直接接続"| cloudflared_home
-cloudflared_home -.-> minio
+cloudflared_home -.-> nginx_minio
+nginx_minio -.-> minio
 
 %% === MediaProxy・SummaryProxyは独自ルート（Tailscale未接続） ===
 mediaproxy -->|"⑤画像処理用アクセス<br/>（Tailscale未接続）<br/>独自ルート"| internet
@@ -519,6 +521,6 @@ yamisskey -.->|"プロキシバイパス<br/>（DeepL・reCAPTCHA等）"| extern
 %% サマリープロキシからMisskeyへの情報返却
 summaryproxy -.->|"⑦URL情報返却"| yamisskey
 
-%% 直接URLアクセス（稀なケース）
-enduser -.->|"drive.yami.ski<br/>直接URL アクセス<br/>（稀なケース）"| cloudflared_home
+%% 直接URLアクセス（ブロック）
+enduser -.->|"drive.yami.ski<br/>直接URL アクセス<br/>❌ Nginx でブロック"| cloudflared_home
 ```
