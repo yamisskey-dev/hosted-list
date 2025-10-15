@@ -442,33 +442,23 @@ classDef federation fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.5px
 classDef direct fill:#dcfce7,stroke:#16a34a,stroke-width:2px
 classDef tailscale fill:#fef3c7,stroke:#d97706,stroke-width:2px
 classDef local fill:#dcfce7,stroke:#16a34a,stroke-width:3px
-classDef containers fill:#bfdbfe,stroke:#1e40af,stroke-width:2px
-classDef vps fill:#fef3c7,stroke:#d97706,stroke-width:3px
 
 %% External actors
 enduser([エンドユーザー<br/>Webブラウザ]):::user
 external_servers([外部サーバー<br/>（他Misskey・画像・API等）]):::federation
 bypass_services([DeepL API<br/>reCAPTCHA<br/>hCaptcha<br/>Cloudflare Challenges]):::direct
 
-subgraph cloudflare_services[☁️ Cloudflare Services]
-    direction TB
-    cloudflared_tunnel[Cloudflare Tunnel<br/>yami.ski]:::cloudflare
-    
-    subgraph containers[Cloudflare Containers<br/>Workers Paid Plan]
-        worker[Worker<br/>ルーティング・認証]:::cloudflare
-        mediaproxy_container[Media Proxy Container<br/>画像取得・変換<br/>自動スケール]:::containers
-        summaryproxy_container[Summary Proxy Container<br/>URL情報取得<br/>自動スケール]:::containers
-    end
-end
-
 subgraph support[Support Infrastructure]
     direction TB
     
-    subgraph linode[Linode Nanode 1GB - $5/月]
+    subgraph linode[Linode Servers]
         direction TB
-        subgraph proxy[linode-proxy - 最小構成]
-            squid[Squid プロキシ<br/>🔗 Tailscale ACL制限]:::vps
-            warp[Cloudflare WARP<br/>IP隠蔽専用]:::vps
+        subgraph proxy[linode-proxy]
+            summaryproxy[Summary proxy<br/>独自IP]:::direct
+            mediaproxy[Media proxy<br/>独自IP]:::direct
+            squid[Squid プロキシ<br/>🔗 Tailscale ACL制限]:::tailscale
+            warp[Cloudflare WARP<br/>drive.yami.ski除外]:::cloudflare
+            cloudflared_p[Cloudflared]:::cloudflare
         end
     end
     
@@ -478,38 +468,39 @@ subgraph support[Support Infrastructure]
             nginx_misskey[Nginx + ModSecurity<br/>WAF・Reverse Proxy]:::security
             yamisskey[Misskey<br/>🔗 Tailscale接続]:::tailscale
             minio_local[MinIO<br/>オブジェクトストレージ]:::local
+            cloudflared_bc[Cloudflared]:::cloudflare
         end
     end
 end
 
 %% エンドユーザーのアクセス経路（太線）
-enduser ==>|"①Web UI アクセス"| cloudflared_tunnel
-cloudflared_tunnel ==> nginx_misskey
+enduser ==>|"①Web UI アクセス"| cloudflared_bc
+cloudflared_bc ==> nginx_misskey
 nginx_misskey ==> yamisskey
 
 %% 外部サーバーからの連合リクエスト（通常線）
-external_servers -->|"②連合リクエスト"| cloudflared_tunnel
+external_servers -->|"②連合リクエスト"| cloudflared_bc
 
 %% Misskeyからのローカル接続（太線・緑色）
 yamisskey ==>|"③ローカル接続<br/>高速・低レイテンシ"| minio_local
 
-%% Misskeyからの全外部通信（連合）はSquid + WARP経由
-yamisskey ==>|"④🔗 Tailscale VPN<br/>暗号化トンネル<br/>連合通信・外部画像"| squid
-squid ==>|"⚠️ IP隠蔽"| warp
-warp -->|"Cloudflare IPから発信"| external_servers
+%% Misskeyサーバーからの全外部通信はSquid経由
+yamisskey ==>|"④🔗 Tailscale経由<br/>全外部通信"| squid
+squid --> warp
 
-%% Media/Summary ProxyへのアクセスはContainersへ直接
-yamisskey ==>|"⑤Media/Summary<br/>リクエスト<br/>HTTPS直接"| worker
-worker ==> mediaproxy_container
-worker ==> summaryproxy_container
+%% WARPからの分岐
+warp -->|"外部サーバーへ"| external_servers
+warp ==>|"SummaryProxy<br/>アクセス"| cloudflared_p
+warp -->|"外部URL情報取得"| summaryproxy
+cloudflared_p ==> mediaproxy
+cloudflared_p -.-> summaryproxy
+squid ==>|"MediaProxy<br/>アクセス"| cloudflared_p
 
-%% Containersが外部から画像・情報を取得
-mediaproxy_container -->|"外部画像取得<br/>Cloudflare IPから"| external_servers
-summaryproxy_container -->|"URL情報取得<br/>Cloudflare IPから"| external_servers
+%% MediaProxyからMisskeyへ画像処理結果を返却
+mediaproxy ==>|"⑤画像取得/変換結果<br/>返却"| cloudflared_bc
 
-%% Containersからの結果返却
-mediaproxy_container ==>|"⑥画像変換結果<br/>返却"| cloudflared_tunnel
-summaryproxy_container ==>|"⑦URL情報<br/>返却"| cloudflared_tunnel
+%% SummaryProxyからの返却
+summaryproxy -.->|"⑥URL情報取得結果<br/>返却"| cloudflared_bc
 
 %% プロキシバイパス対象（特定APIサービス）
 yamisskey -.->|"プロキシバイパス<br/>API直接アクセス"| bypass_services
