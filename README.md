@@ -211,158 +211,119 @@ graph TB
     class pfsense_vm,tpot_vm,malcolm_vm homeServer
 ```
 
-## Integrated Monitoring & Automation System with IaC
+## Monitoring ＆ Alert System
 
 ```mermaid
 graph TB
     %% Style definitions
     classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:2px
-    classDef automation fill:#cffafe,stroke:#06b6d4,stroke-width:2px
     classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
-    classDef common fill:#f1f5f9,stroke:#475569,stroke-width:1px
+    classDef cloud fill:#dbeafe,stroke:#0284c7,stroke-width:2px
     classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px
-    classDef storage fill:#f3e8ff,stroke:#7e22ce,stroke-width:1.5px
-    classDef iac fill:#f0f9ff,stroke:#0369a1,stroke-width:2px
-    classDef template fill:#fef3c7,stroke:#d97706,stroke-width:1.5px
+    classDef app fill:#fce7f3,stroke:#be185d,stroke-width:1.5px
 
-    %% IaC Management Layer
-    subgraph iac_layer["Infrastructure as Code Layer"]
-        direction TB
-        
-        subgraph git_ops["GitOps Workflow"]
-            git_repo["Git Repository"]:::iac
-            github_actions["GitHub Actions"]:::automation
-        end
-        
-        subgraph terraform_mgmt["Terraform Management"]
-            terraform_cli["Terraform"]:::iac
-            tf_state["Terraform State"]:::iac
-        end
+    %% Grafana Cloud
+    subgraph grafana_cloud["☁️ Grafana Cloud"]
+        grafana["Grafana<br/>ダッシュボード"]:::cloud
+        storage["メトリクスDB<br/>14日保持"]:::cloud
+        oncall["OnCall<br/>アラート管理"]:::cloud
     end
 
-    %% Caspar - Enhanced with IaC
-    subgraph caspar["caspar - プライマリ監視ハブ + IaC制御"]
-        direction TB
-        
-        subgraph monitoring_core["Core Monitoring"]
-            prometheus["Prometheus<br/>メトリクス収集<br/>+ Infrastructure targets"]:::monitoring
-            blackbox_exporter["Blackbox Exporter<br/>外部サービス監視<br/>+ VM health checks"]:::monitoring
-            grafana["Grafana<br/>可視化ダッシュボード<br/>+ Infrastructure metrics"]:::monitoring
-            uptime_kuma["Uptime Kuma<br/>サービス死活監視<br/>+ Automated discovery"]:::monitoring
-            alert_manager["AlertManager<br/>通知管理<br/>+ Infrastructure alerts"]:::alert
-        end
-        
-        subgraph automation_enhanced["Enhanced Automation"]
-            ansible["Ansible<br/>構成管理・自動化<br/>+ Dynamic inventory<br/>+ Cloud-init integration"]:::automation
-            terraform_runner["Terraform Runner<br/>• Infrastructure changes<br/>• VM lifecycle<br/>• Config drift detection"]:::iac
-            cloud_init_mgmt["Cloud-init Manager<br/>• Template generation<br/>• Config validation<br/>• Deployment tracking"]:::template
-        end
+    %% Monitoring Hub
+    subgraph caspar["caspar - 監視ハブ"]
+        prometheus["Prometheus Agent<br/>メトリクス収集"]:::monitoring
+        uptime["Uptime Kuma<br/>死活監視"]:::monitoring
+        alertmgr["AlertManager<br/>通知管理"]:::alert
     end
 
-    %% External Notifications - Enhanced
-    subgraph notifications["外部通知 + Infrastructure Events"]
-        direction TB
-        slack["Slack<br/>チーム通知<br/>+ Infrastructure changes<br/>+ Deployment status"]:::alert
-        discord["Discord<br/>個人通知<br/>+ VM lifecycle events<br/>+ Automation results"]:::alert
+    %% Monitored Systems
+    subgraph systems["監視対象システム"]
+        balthasar["balthasar<br/>Node/cAdvisor"]:::homeServer
+        proxmox["Proxmox VMs<br/>T-Pot/Malcolm/pfSense"]:::homeServer
     end
 
-    %% Monitored Infrastructure - IaC Managed
-    subgraph infrastructure["IaC管理インフラストラクチャ"]
-        direction TB
-        
-        subgraph balthasar["balthasar - 本番サーバー (IaC管理)"]
-            direction TB
-            node_exporter_b["Node Exporter<br/>+ Terraform managed"]:::common
-            cadvisor_b["cAdvisor<br/>+ Auto-configured"]:::common
-            fail2ban_b["Fail2ban<br/>+ Template deployed"]:::common
-            misskey_app["Misskey<br/>+ Cloud-init deployed<br/>+ Webhook通知"]:::common
-            db_backup_script["DBバックアップスクリプト<br/>+ Ansible managed<br/>+ 結果通知"]:::automation
-        end
-        
-        subgraph proxmox_iac["Proxmox環境 (Terraform管理)"]
-            direction TB
-            tpot_iac["T-Pot<br/>+ Terraform provisioned<br/>+ Cloud-init configured<br/>+ ハニーポット監視"]:::monitoring
-            malcolm_iac["Malcolm<br/>+ IaC deployed<br/>+ Auto-configured<br/>+ ネットワーク分析"]:::monitoring
-            pfsense_iac["pfSense<br/>+ Template deployed<br/>+ Ansible configured<br/>+ ファイアウォール統計"]:::monitoring
-            vm_templates["VM Templates<br/>+ Cloud-init ready<br/>+ Monitoring pre-installed<br/>+ Auto-discovery enabled"]:::template
-        end
-        
-        subgraph truenas_iac["TrueNAS (IaC統合)"]
-            direction TB
-            node_exporter_t["Node Exporter<br/>+ Ansible deployed<br/>+ システム監視"]:::common
-            backup_script_iac["Backup Script<br/>+ Template generated<br/>+ 結果通知<br/>+ Infrastructure backup"]:::automation
-        end
+    %% Application Notifications
+    subgraph app_notify["アプリケーション通知"]
+        misskey["Misskey<br/>Webhook"]:::app
+        backup["バックアップ<br/>結果通知"]:::app
     end
 
-    %% IaC Workflow Connections
-    git_repo --> github_actions
-    github_actions --> terraform_cli
-    github_actions --> ansible
-    terraform_cli --> tf_state
-    terraform_cli --> terraform_runner
+    %% External Notifications
+    slack["Slack"]:::alert
+    discord["Discord"]:::alert
 
-    %% Infrastructure Provisioning Flow
-    terraform_runner -->|"VM作成・更新<br/>Network設定<br/>Storage割り当て"| proxmox_iac
-    cloud_init_mgmt -->|"初期設定<br/>サービス起動<br/>監視エージェント"| vm_templates
-    ansible -->|"設定管理<br/>アプリケーション<br/>監視設定"| infrastructure
-
-    %% Enhanced Monitoring Data Flow
-    node_exporter_b --> prometheus
-    cadvisor_b --> prometheus
-    fail2ban_b --> prometheus
-    misskey_app --> prometheus
-    node_exporter_t --> prometheus
+    %% Monitoring Flow
+    systems --> prometheus
+    prometheus ==>|Remote Write| storage
+    storage --> grafana
     
-    tpot_iac --> prometheus
-    malcolm_iac --> prometheus
-    pfsense_iac --> prometheus
-    vm_templates -->|"Auto-discovery<br/>Dynamic targets"| prometheus
+    %% Alert Flow
+    uptime --> alertmgr
+    grafana -.->|オプション| oncall
     
-    blackbox_exporter --> prometheus
-    tf_state -->|"Infrastructure inventory<br/>Target discovery"| prometheus
+    alertmgr --> slack
+    alertmgr --> discord
+    oncall -.-> slack
+    oncall -.-> discord
 
-    %% Cross-monitoring for redundancy
-    uptime_kuma -->|"サービス死活監視<br/>+ Infrastructure health"| alert_manager
-
-    %% Monitoring Integration
-    prometheus --> grafana
-    prometheus --> alert_manager
-    uptime_kuma --> alert_manager
-
-    %% External monitoring
-    prometheus -->|"定期監視<br/>+ Infrastructure metrics"| uptime_kuma
-
-    %% Enhanced AlertManager Notifications
-    alert_manager -->|"重要アラート<br/>サービス停止<br/>+ Infrastructure failures"| slack
-    alert_manager -->|"システム監視<br/>リアルタイム<br/>+ VM lifecycle events"| discord
-
-    %% Enhanced Application Notifications
-    misskey_app -->|"Webhook通知<br/>新規登録・管理イベント"| discord
-    db_backup_script -->|"バックアップ結果<br/>成功・失敗・統計"| discord
-    backup_script_iac -->|"TrueNASバックアップ結果<br/>+ Infrastructure backup<br/>成功・失敗・統計"| discord
-
-    %% IaC Event Notifications
-    terraform_runner -->|"Infrastructure changes<br/>VM lifecycle events<br/>Configuration drift"| discord
-    github_actions -->|"Deployment status<br/>Pipeline results<br/>Validation errors"| slack
-
-    %% Enhanced Automation Flow
-    alert_manager --> ansible
-    alert_manager --> terraform_runner
-    ansible --> infrastructure
-    terraform_runner -->|"Self-healing"| proxmox_iac
-
-    %% Infrastructure Feedback Loop
-    prometheus -->|"Metrics-driven"| terraform_runner
-    grafana -->|"Capacity planning"| cloud_init_mgmt
+    %% App Notifications
+    misskey --> discord
+    backup --> discord
 
     %% Apply styles
     class caspar homeServer
-    class balthasar,proxmox_iac,truenas_iac homeServer
-    class iac_layer iac
-    class git_ops iac
-    class terraform_mgmt iac
-    class monitoring_core monitoring
-    class automation_enhanced automation
+```
+
+## Infrastructure as Code & Automation Systems
+
+```mermaid
+graph TB
+    %% Style definitions
+    classDef iac fill:#f0f9ff,stroke:#0369a1,stroke-width:2px
+    classDef automation fill:#cffafe,stroke:#06b6d4,stroke-width:2px
+    classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
+    classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px
+
+    %% Source Control
+    subgraph source["ソースコード管理"]
+        git["Git Repository<br/>Infrastructure as Code"]:::iac
+        actions["GitHub Actions<br/>CI/CD Pipeline"]:::automation
+    end
+
+    %% Control Plane
+    subgraph caspar["caspar - 制御ハブ"]
+        terraform["Terraform<br/>インフラ定義・プロビジョニング"]:::iac
+        ansible["Ansible<br/>設定管理・デプロイ"]:::automation
+        cloud_init["Cloud-init<br/>VM初期化"]:::automation
+    end
+
+    %% Managed Infrastructure
+    subgraph infra["管理対象インフラ"]
+        proxmox["Proxmox VMs<br/>• pfSense<br/>• T-Pot<br/>• Malcolm"]:::homeServer
+        physical["物理サーバー<br/>• balthasar<br/>• caspar"]:::homeServer
+        truenas["TrueNAS<br/>ストレージ・バックアップ"]:::homeServer
+    end
+
+    %% Notifications
+    slack["Slack<br/>デプロイ通知"]:::alert
+    discord["Discord<br/>変更通知"]:::alert
+
+    %% Workflow
+    git --> actions
+    actions --> terraform
+    actions --> ansible
+    
+    terraform -->|VM作成・更新| proxmox
+    ansible -->|設定適用| infra
+    cloud_init -->|初期設定| proxmox
+
+    %% Notifications
+    actions --> slack
+    terraform --> discord
+    ansible --> discord
+
+    %% Apply styles
+    class caspar homeServer
 ```
 
 ## Storage & Backup Strategy
