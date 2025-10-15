@@ -274,24 +274,17 @@ graph TB
     %% Style definitions
     classDef monitoring fill:#d1fae5,stroke:#047857,stroke-width:2px
     classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
-    classDef cloud fill:#dbeafe,stroke:#0284c7,stroke-width:2px
     classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px
     classDef app fill:#fce7f3,stroke:#be185d,stroke-width:1.5px
-
-    %% Grafana Cloud
-    subgraph grafana_cloud["☁️ Grafana Cloud"]
-        grafana["Grafana<br/>ダッシュボード"]:::cloud
-        storage["Prometheus DB<br/>長期保存"]:::cloud
-        oncall["OnCall<br/>アラート管理"]:::cloud
-    end
-
-    %% Monitoring Hub (caspar)
-    subgraph caspar["🏛️ caspar - 監視ハブ"]
-        prometheus_agent["Prometheus Agent<br/>9090<br/>軽量収集・転送"]:::monitoring
+    
+    %% Monitoring Hub (caspar) - セルフホスト化
+    subgraph caspar["🏛️ caspar - 監視ハブ (セルフホスト)"]
+        prometheus["Prometheus Server<br/>9090<br/>メトリクス収集・保存"]:::monitoring
+        grafana["Grafana<br/>3000<br/>ダッシュボード"]:::monitoring
         uptime["Uptime Kuma<br/>3009<br/>死活監視"]:::monitoring
         alertmgr["AlertManager<br/>9093<br/>通知管理"]:::alert
     end
-
+    
     %% All Monitored Systems (consolidated)
     subgraph systems["監視対象システム"]
         balthasar_node["balthasar<br/>Node/cAdvisor<br/>Misskey/Outline/MinIO"]:::homeServer
@@ -299,35 +292,32 @@ graph TB
         raspberry_node["raspberrypi<br/>Node Exporter<br/>Minecraft"]:::homeServer
         linode_node["linode_prox<br/>Media Proxy/Summaly"]:::homeServer
     end
-
+    
     %% Application Notifications
     subgraph app_notify["アプリケーション通知"]
         misskey_webhook["Misskey<br/>Webhook"]:::app
         backup_notify["バックアップ<br/>結果通知"]:::app
     end
-
+    
     %% External Notifications
     discord["Discord"]:::alert
     slack["Slack"]:::alert
-
-    %% Monitoring Flow (Agent mode)
-    systems --> prometheus_agent
-    prometheus_agent ==>|Remote Write<br/>ローカル保存なし| storage
-    storage --> grafana
+    
+    %% Monitoring Flow (Full Prometheus)
+    systems --> prometheus
+    prometheus --> grafana
     
     %% Alert Flow
     uptime --> alertmgr
-    grafana -.->|アラート連携| oncall
+    prometheus -->|アラートルール| alertmgr
     
     alertmgr --> discord
     alertmgr --> slack
-    oncall -.-> discord
-    oncall -.-> slack
-
+    
     %% Direct App Notifications
     misskey_webhook --> discord
     backup_notify --> discord
-
+    
     %% Apply styles
     class caspar monitoring
     class systems homeServer
