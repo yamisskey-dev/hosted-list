@@ -34,9 +34,7 @@ graph TB
             end
             
             subgraph apps[Apps]
-                lemmy[Lemmy]:::service
                 outline[Outline]:::service
-                vikunja[Vikunja]:::service
                 cryptpad[CryptPad]:::service
             end
             
