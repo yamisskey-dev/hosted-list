@@ -13,7 +13,11 @@ graph TB
     classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
     classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px
     classDef local fill:#86efac,stroke:#16a34a,stroke-width:3px
-
+    classDef activitypubStyle fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px
+    classDef nostrStyle fill:#fed7aa,stroke:#ea580c,stroke-width:2px
+    classDef matrixStyle fill:#dbeafe,stroke:#1d4ed8,stroke-width:2px
+    classDef appsStyle fill:#fef3c7,stroke:#ca8a04,stroke-width:2px
+    
     %% Main Infrastructure
     subgraph main_servers[Main Servers]
         direction LR
@@ -23,10 +27,13 @@ graph TB
             cloudflared_b[Cloudflared]:::cloudflare
             nginx_b[Nginx + ModSecurity<br/>Reverse Proxy]:::proxy
             
-            subgraph social[Social]
+            subgraph activitypub[ActivityPub]
                 yamisskey[Misskey]:::service
                 neoquesdon[Neo-Quesdon]:::service
-                nostream[Nostr]:::service
+            end
+            
+            subgraph nostr[Nostr]
+               nostream[Nostream]:::service
             end
             
             subgraph matrix[Matrix]
@@ -75,11 +82,11 @@ graph TB
         
         internet((Internet)):::cloudflare
     end
-
+    
     %% Local storage connections (thick lines)
     yamisskey --> minio
     outline --> minio
-
+    
     %% Local authentication connections (within balthasar)
     outline --> zitadel
     yamisskey --> mcaptcha
@@ -87,37 +94,39 @@ graph TB
     %% Other core connections
     element --> synapse
     minecraft --> playig
-
+    
     %% Cloudflared to Nginx connections
     cloudflared_b --> nginx_b
     cloudflared_c --> nginx_c
-
+    
     %% Nginx to services - balthasar
     nginx_b --> yamisskey
     nginx_b --> neoquesdon
+    nginx_b --> nostream
     nginx_b --> element
     nginx_b --> synapse
     nginx_b --> outline
-    nginx_b --> vikunja
     nginx_b --> cryptpad
-    nginx_b --> lemmy
     nginx_b --> zitadel
     nginx_b --> mcaptcha
     
     %% Nginx to services - caspar
     nginx_c --> nayamisskey
-    nginx_c --> nostream
     nginx_c --> ctfd
-
+    
     %% External connections
     playig --> internet
     cloudflared_b --> internet
     cloudflared_c --> internet
-
-    %% Apply styles
+    
+    %% Apply styles to subgraphs
     class balthasar,caspar homeServer
     class raspberrypi rpi
-    class social,social_c,matrix,apps,games,CTF service
+    class activitypub activitypubStyle
+    class nostr nostrStyle
+    class matrix matrixStyle
+    class apps appsStyle
+    class games,CTF,social_c service
     class auth_services security
     class cloudflared_b,cloudflared_c cloudflare
     class nginx_b,nginx_c proxy
