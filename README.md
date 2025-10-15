@@ -153,7 +153,7 @@ graph TB
        end
        
        %% Virtual Machines
-       subgraph vms["Virtual Machines (Terraform Managed)"]
+       subgraph vms["Virtual Machines"]
            subgraph pfsense_vm["pfSense VM - 4c/8GB/32GB"]
                pfsense["pfSense 2.7+"]:::security
                haproxy["HAProxy"]:::service
@@ -179,14 +179,6 @@ graph TB
        end
     end
     
-    %% Terraform Configuration
-    subgraph terraform["Terraform Configuration"]
-        main_tf["main.tf"]:::service
-        variables_tf["variables.tf"]:::service
-        modules["modules/"]:::service
-        state["terraform.tfstate"]:::service
-    end
-    
     %% Network connections
     vmbr0 --> pfsense_vm
     vmbr2 --> tpot_vm
@@ -203,12 +195,67 @@ graph TB
     malcolm --> elasticsearch
     suricata_malcolm --> malcolm
     
-    %% Terraform management
-    terraform --> vms
-    
     %% Apply styles
     class proxmox homeServer
     class pfsense_vm,tpot_vm,malcolm_vm homeServer
+```
+
+## Infrastructure as Code & Automation Systems
+
+```mermaid
+graph TB
+    %% Style definitions
+    classDef iac fill:#f0f9ff,stroke:#0369a1,stroke-width:2px
+    classDef automation fill:#cffafe,stroke:#06b6d4,stroke-width:2px
+    classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
+    classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px
+
+    %% Source Control
+    subgraph source["ソースコード管理"]
+        git["Git Repository<br/>Infrastructure as Code"]:::iac
+        actions["GitHub Actions<br/>CI/CD Pipeline"]:::automation
+    end
+
+    %% Control Plane
+    subgraph caspar["caspar - 制御ハブ"]
+        terraform["Terraform<br/>インフラ定義・プロビジョニング"]:::iac
+        ansible["Ansible<br/>設定管理・デプロイ"]:::automation
+        cloud_init["Cloud-init<br/>VM初期化"]:::automation
+    end
+
+    %% Managed Infrastructure
+    subgraph infra["管理対象インフラ"]
+        subgraph proxmox_infra["Proxmox (Terraform管理)"]
+            proxmox_vms["Virtual Machines<br/>• pfSense (4c/8GB/32GB)<br/>• T-Pot (8c/24GB/200GB)<br/>• Malcolm (12c/32GB/500GB)"]:::homeServer
+            proxmox_storage["Storage: local-lvm"]:::homeServer
+            proxmox_network["Networks: vmbr0-3"]:::homeServer
+        end
+        physical["物理サーバー (Ansible管理)<br/>• balthasar<br/>• caspar"]:::homeServer
+        truenas["TrueNAS (Ansible管理)<br/>ストレージ・バックアップ"]:::homeServer
+    end
+
+    %% Notifications
+    slack["Slack<br/>デプロイ通知"]:::alert
+    discord["Discord<br/>変更通知"]:::alert
+
+    %% Workflow
+    git --> actions
+    actions --> terraform
+    actions --> ansible
+    
+    terraform -->|VM作成・更新<br/>ストレージ割り当て<br/>ネットワーク設定| proxmox_infra
+    ansible -->|設定適用| physical
+    ansible -->|設定適用| truenas
+    cloud_init -->|初期設定| proxmox_vms
+
+    %% Notifications
+    actions --> slack
+    terraform --> discord
+    ansible --> discord
+
+    %% Apply styles
+    class caspar homeServer
+    class proxmox_infra homeServer
 ```
 
 ## Monitoring ＆ Alert System
@@ -269,58 +316,6 @@ graph TB
     %% App Notifications
     misskey --> discord
     backup --> discord
-
-    %% Apply styles
-    class caspar homeServer
-```
-
-## Infrastructure as Code & Automation Systems
-
-```mermaid
-graph TB
-    %% Style definitions
-    classDef iac fill:#f0f9ff,stroke:#0369a1,stroke-width:2px
-    classDef automation fill:#cffafe,stroke:#06b6d4,stroke-width:2px
-    classDef homeServer fill:#e2e8f0,stroke:#334155,stroke-width:2px
-    classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px
-
-    %% Source Control
-    subgraph source["ソースコード管理"]
-        git["Git Repository<br/>Infrastructure as Code"]:::iac
-        actions["GitHub Actions<br/>CI/CD Pipeline"]:::automation
-    end
-
-    %% Control Plane
-    subgraph caspar["caspar - 制御ハブ"]
-        terraform["Terraform<br/>インフラ定義・プロビジョニング"]:::iac
-        ansible["Ansible<br/>設定管理・デプロイ"]:::automation
-        cloud_init["Cloud-init<br/>VM初期化"]:::automation
-    end
-
-    %% Managed Infrastructure
-    subgraph infra["管理対象インフラ"]
-        proxmox["Proxmox VMs<br/>• pfSense<br/>• T-Pot<br/>• Malcolm"]:::homeServer
-        physical["物理サーバー<br/>• balthasar<br/>• caspar"]:::homeServer
-        truenas["TrueNAS<br/>ストレージ・バックアップ"]:::homeServer
-    end
-
-    %% Notifications
-    slack["Slack<br/>デプロイ通知"]:::alert
-    discord["Discord<br/>変更通知"]:::alert
-
-    %% Workflow
-    git --> actions
-    actions --> terraform
-    actions --> ansible
-    
-    terraform -->|VM作成・更新| proxmox
-    ansible -->|設定適用| infra
-    cloud_init -->|初期設定| proxmox
-
-    %% Notifications
-    actions --> slack
-    terraform --> discord
-    ansible --> discord
 
     %% Apply styles
     class caspar homeServer
