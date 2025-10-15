@@ -412,7 +412,7 @@ graph TB
             subgraph balthasar["balthasar 本番"]
                 misskey1["Misskey"]:::service
                 db1["PostgreSQL DB"]:::service
-                minio_local["MinIO<br/>メディアストレージ<br/>1.5TB<br/>プライマリ"]:::local
+                minio_local["MinIO<br/>オブジェクトストレージ<br/2TB"]:::local
                 backup1["Backup Agent<br/>pg_dump + rsync"]:::backup
             end
         end
