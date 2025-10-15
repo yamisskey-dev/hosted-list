@@ -12,12 +12,13 @@ graph TB
     classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
     classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
     classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+    classDef local fill:#86efac,stroke:#16a34a,stroke-width:3px
 
     %% Main Infrastructure
     subgraph main_servers[Main Servers]
         direction LR
         
-        subgraph balthasar[balthasar]
+        subgraph balthasar[balthasar - 本番環境]
             direction TB
             cloudflared_b[Cloudflared]:::cloudflare
             nginx_b[Nginx + ModSecurity<br/>Reverse Proxy]:::proxy
@@ -39,32 +40,29 @@ graph TB
                 cryptpad[CryptPad]:::service
             end
             
+            subgraph auth_services[認証・セキュリティ]
+                zitadel[Zitadel]:::security
+                mcaptcha[mCaptcha]:::security
+            end
+            
             subgraph storage_local[Storage]
                 minio[MinIO]:::storage
             end
         end
         
-        subgraph caspar[caspar]
+        subgraph caspar[caspar - 実験・テスト環境]
             direction TB
             cloudflared_c[Cloudflared]:::cloudflare
             nginx_c[Nginx + ModSecurity<br/>Reverse Proxy]:::proxy
-            
-            subgraph security_group[Security]
-                zitadel[Zitadel]:::security
-            end
             
             subgraph CTF[CTF]
                 ctfd[CTFd]:::service
                 vm[VM]:::service
             end
             
-            subgraph social_c[Social]
+            subgraph social_c[Social - テスト]
                 nayamisskey[Misskey N/A]:::service
                 nostream[Nostr]:::service
-            end
-
-            subgraph captcha_group[Captcha]
-                mcaptcha[mCaptcha]:::service
             end
         end
         
@@ -81,21 +79,22 @@ graph TB
     end
 
     %% Local storage connections (thick lines)
-    yamisskey -->  minio
-    outline -->  minio
+    yamisskey --> minio
+    outline --> minio
 
-    %% Core connections
-    zitadel --> outline
+    %% Local authentication connections (within balthasar)
+    outline --> zitadel
+    yamisskey --> mcaptcha
+    
+    %% Other core connections
     element --> synapse
     minecraft --> playig
-    yamisskey --> mcaptcha
-    nayamisskey --> mcaptcha
 
     %% Cloudflared to Nginx connections
     cloudflared_b --> nginx_b
     cloudflared_c --> nginx_c
 
-    %% Nginx to services
+    %% Nginx to services - balthasar
     nginx_b --> yamisskey
     nginx_b --> neoquesdon
     nginx_b --> element
@@ -104,11 +103,13 @@ graph TB
     nginx_b --> vikunja
     nginx_b --> cryptpad
     nginx_b --> lemmy
+    nginx_b --> zitadel
+    nginx_b --> mcaptcha
+    
+    %% Nginx to services - caspar
     nginx_c --> nayamisskey
     nginx_c --> nostream
     nginx_c --> ctfd
-    nginx_c --> zitadel
-    nginx_c --> mcaptcha
 
     %% External connections
     playig --> internet
@@ -118,8 +119,8 @@ graph TB
     %% Apply styles
     class balthasar,caspar homeServer
     class raspberrypi rpi
-    class social,social_c,matrix,apps,games,CTF,captcha_group service
-    class security_group security
+    class social,social_c,matrix,apps,games,CTF service
+    class auth_services security
     class cloudflared_b,cloudflared_c cloudflare
     class nginx_b,nginx_c proxy
     class storage_local storage
