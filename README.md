@@ -26,6 +26,7 @@ graph TB
             subgraph social[Social]
                 yamisskey[Misskey]:::service
                 neoquesdon[Neo-Quesdon]:::service
+                nostream[Nostr]:::service
             end
             
             subgraph matrix[Matrix]
@@ -60,7 +61,6 @@ graph TB
             
             subgraph social_c[Social - テスト]
                 nayamisskey[Misskey N/A]:::service
-                nostream[Nostr]:::service
             end
         end
         
