@@ -11,6 +11,7 @@ graph TB
     classDef proxy fill:#e0e7ff,stroke:#3730a3,stroke-width:2px
     classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
     classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
+    classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px
 
     %% Main Infrastructure
     subgraph main_servers[Main Servers]
@@ -36,6 +37,10 @@ graph TB
                 outline[Outline]:::service
                 vikunja[Vikunja]:::service
                 cryptpad[CryptPad]:::service
+            end
+            
+            subgraph storage_local[Storage]
+                minio[MinIO]:::storage
             end
         end
         
@@ -75,6 +80,10 @@ graph TB
         internet((Internet)):::cloudflare
     end
 
+    %% Local storage connections (thick lines)
+    yamisskey -->  minio
+    outline -->  minio
+
     %% Core connections
     zitadel --> outline
     element --> synapse
@@ -113,6 +122,7 @@ graph TB
     class security_group security
     class cloudflared_b,cloudflared_c cloudflare
     class nginx_b,nginx_c proxy
+    class storage_local storage
 ```
 
 ## Proxmox Virtualization Platform & Security Environment
@@ -369,6 +379,7 @@ graph TB
     classDef cloud fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
     classDef zfs fill:#4c1d95,stroke:#c4b5fd,stroke-width:2px,color:#ffffff
     classDef encrypted fill:#fee2e2,stroke:#991b1b,stroke-width:2px
+    classDef local fill:#dcfce7,stroke:#16a34a,stroke-width:2px
 
     %% External storage
     subgraph external["外部ストレージ"]
@@ -390,7 +401,6 @@ graph TB
             subgraph truenas_services["TrueNAS Services (Docker統一)"]
                 zfs_pool["ZFS Pool (Mirror)<br/>スナップショット<br/>圧縮・重複排除"]:::zfs
                 backup_svc["Backup Services<br/>pg_dump scheduler<br/>rsync server<br/>rclone Filen sync"]:::backup
-                minio["MinIO (Docker)<br/>メディアストレージ<br/>1.5TB<br/>プライマリ"]:::storage
                 node_exporter["Node Exporter (Docker)<br/>監視エージェント"]:::service
             end
             
@@ -402,18 +412,19 @@ graph TB
             subgraph balthasar["balthasar 本番"]
                 misskey1["Misskey"]:::service
                 db1["PostgreSQL DB"]:::service
+                minio_local["MinIO<br/>メディアストレージ<br/>1.5TB<br/>プライマリ"]:::local
                 backup1["Backup Agent<br/>pg_dump + rsync"]:::backup
             end
         end
     end
 
-    %% Service connections - シンプルな構成維持
+    %% Service connections - ローカル接続
+    misskey1 --> minio_local
     misskey1 --> db1
-    misskey1 --> minio
 
-    %% MinIO → Filen 日次差分バックアップ (新規メイン)
-    minio ==>|"日次差分バックアップ<br/>rclone sync<br/>暗号化転送<br/>5-15分/日"| filen
-    backup_svc ==>|"MinIO→Filen<br/>自動スケジューリング<br/>監視・ログ"| filen
+    %% MinIO → Filen 日次差分バックアップ (rsync経由)
+    minio_local -.->|"rsync over SSH<br/>2.5G LAN"| backup_svc
+    backup_svc ==>|"日次差分バックアップ<br/>rclone sync<br/>暗号化転送<br/>5-15分/日"| filen
 
     %% DB Backup flows - 既存維持
     db1 -.->|"日次DBダンプ<br/>2.5G LAN<br/>高速転送"| backup_svc
@@ -430,7 +441,7 @@ graph TB
     
     %% System backup flows
     backup1 -.->|"システムバックアップ<br/>rsync over SSH"| backup_svc
-    minio -.->|"ローカル統計<br/>同期状況監視"| backup_svc
+    minio_local -.->|"メディアバックアップ<br/>rsync同期"| backup_svc
     
     %% Monitoring flows
     node_exporter -.->|"システム監視<br/>メトリクス送信"| zfs_pool
@@ -446,7 +457,8 @@ graph TB
     class backup_svc,backup1 backup
     class r2 cloud
     class filen encrypted
-    class minio,slot456,slot23,zfs_pool storage
+    class minio_local local
+    class slot456,slot23,zfs_pool storage
     class emmc storage
 ```
 
@@ -460,9 +472,9 @@ classDef security fill:#fee2e2,stroke:#991b1b,stroke-width:1px
 classDef cloudflare fill:#f0fdfa,stroke:#0f766e,stroke-width:1.5px
 classDef user fill:#fef9c3,stroke:#ca8a04,stroke-width:1.5px
 classDef federation fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.5px
-classDef excludeHome fill:#fef7f7,stroke:#dc2626,stroke-width:3px,stroke-dasharray: 8 4,color:#dc2626
 classDef direct fill:#dcfce7,stroke:#16a34a,stroke-width:2px
 classDef tailscale fill:#fef3c7,stroke:#d97706,stroke-width:2px
+classDef local fill:#dcfce7,stroke:#16a34a,stroke-width:3px
 
 %% External actors
 enduser([エンドユーザー<br/>Webブラウザ]):::user
@@ -488,14 +500,8 @@ subgraph support[Support Infrastructure]
         subgraph balthasar_caspar[balthasar/caspar]
             nginx_misskey[Nginx + ModSecurity<br/>WAF・Reverse Proxy]:::security
             yamisskey[Misskey<br/>🔗 Tailscale接続]:::tailscale
+            minio_local[MinIO<br/>オブジェクトストレージ]:::local
             cloudflared_bc[Cloudflared]:::cloudflare
-        end
-        
-        subgraph truenas[TrueNAS Scale joseph]
-            direction TB
-            nginx_minio[Nginx Reverse Proxy<br/>Referer/User-Agent チェック<br/>直接アクセス禁止]:::security
-            minio[MinIO<br/>オブジェクトストレージ]:::excludeHome
-            cloudflared_home[Cloudflared<br/>（MinIO用トンネル）]:::excludeHome
         end
     end
 end
@@ -508,10 +514,10 @@ nginx_misskey ==> yamisskey
 %% 外部サーバーからの連合リクエスト（通常線）
 external_servers -->|"②連合リクエスト"| cloudflared_bc
 
-%% Misskeyサーバーからの全外部通信はSquid経由
-%% （MediaProxy/SummaryProxy含む）
+%% Misskeyからのローカル接続（太線・緑色）
+yamisskey ==>|"③ローカル接続<br/>高速・低レイテンシ"| minio_local
 
-%% === Misskeyのみ Tailscale経由でSquid使用 ===
+%% Misskeyサーバーからの全外部通信はSquid経由
 yamisskey ==>|"④🔗 Tailscale経由<br/>全外部通信<br/>（MediaProxy・SummaryProxy・外部サーバー）"| squid
 squid --> warp
 
@@ -522,18 +528,14 @@ warp -->|"外部URL情報取得"| summaryproxy
 cloudflared_p ==> mediaproxy
 cloudflared_p -.-> summaryproxy
 squid ==>|"MediaProxy<br/>アクセス"| cloudflared_p
-cloudflared_home -.-> nginx_minio
-nginx_minio -.-> minio
-cloudflared_home ==>|"ファイル処理結果<br/>返却"| cloudflared_bc
 
-%% === MediaProxy・SummaryProxy のルート修正（MediaProxyのみ太線） ===
-mediaproxy ==>|"⑤画像取得/変換要求<br/>TrueNASのCloudflaredへ"| cloudflared_home
+%% MediaProxyからMisskeyへ画像処理結果を返却
+mediaproxy ==>|"⑤画像取得/変換結果<br/>返却"| cloudflared_bc
+
+%% SummaryProxyからの返却
 summaryproxy -.->|"⑥URL情報取得結果<br/>返却"| cloudflared_bc
 
 %% プロキシバイパス対象（特定APIサービス）
 yamisskey -.->|"プロキシバイパス<br/>API直接アクセス"| bypass_services
 bypass_services -.->|"API結果返却<br/>（翻訳・CAPTCHA等）"| yamisskey
-
-%% 直接URLアクセス（ブロック）
-enduser -.->|"drive.yami.ski<br/>直接URL アクセス<br/>❌ Nginx でブロック"| cloudflared_home
 ```
